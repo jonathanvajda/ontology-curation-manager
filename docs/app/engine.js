@@ -2,23 +2,54 @@
 // Phase 1 core: use global N3 and Comunica (from browser bundles)
 // Exposes window.OntologyChecks.evaluateAllQueries(text, fileName)
 
-const { Parser, Store } = window.N3;
-const { newEngine } = window.Comunica;
-
 (function () {
   if (!window.N3) {
     console.error('N3 global not found. Make sure n3.min.js is loaded before engine.js.');
-    return;
   }
   if (!window.Comunica) {
     console.error('Comunica global not found. Make sure comunica-browser.js is loaded before engine.js.');
-    return;
   }
 
-  const { Parser, Store } = window.N3;
-  const { newEngine } = window.Comunica;
+  const N3 = window.N3 || {};
+  const Comunica = window.Comunica || {};
 
-  const comunicaEngine = newEngine();
+  const Parser = N3.Parser;
+  const Store = N3.Store;
+
+  if (!Parser || !Store) {
+    console.error('N3.Parser or N3.Store not found on window.N3. Got:', N3);
+  }
+
+  // ---- Create a Comunica engine instance, handling multiple bundle shapes ----
+  function createComunicaEngine() {
+    // Case 1: bundle exposes newEngine() (query-sparql-browser style)
+    if (typeof Comunica.newEngine === 'function') {
+      console.info('[Comunica] Using Comunica.newEngine()');
+      return Comunica.newEngine();
+    }
+
+    // Case 2: bundle exposes QueryEngine class (Comunica QueryEngine browser bundle)
+    if (typeof Comunica.QueryEngine === 'function') {
+      console.info('[Comunica] Using new Comunica.QueryEngine()');
+      return new Comunica.QueryEngine();
+    }
+
+    console.error(
+      'Could not find a suitable Comunica constructor. ' +
+      'Expected Comunica.newEngine() or Comunica.QueryEngine. ' +
+      'Found keys:',
+      Object.keys(Comunica)
+    );
+    throw new Error('Unsupported Comunica browser bundle shape');
+  }
+
+  let comunicaEngine;
+  try {
+    comunicaEngine = createComunicaEngine();
+  } catch (e) {
+    console.error('Failed to create Comunica engine:', e);
+    // We still define window.OntologyChecks below, but calls will just throw.
+  }
 
   function guessFormatFromFilename(name) {
     if (!name) return 'text/turtle';
@@ -33,6 +64,9 @@ const { newEngine } = window.Comunica;
   }
 
   async function loadOntologyIntoStore(text, filename) {
+    if (!Parser || !Store) {
+      throw new Error('N3.Parser or N3.Store not available.');
+    }
     const format = guessFormatFromFilename(filename);
     const parser = new Parser({ format });
     const store = new Store();
@@ -42,6 +76,9 @@ const { newEngine } = window.Comunica;
   }
 
   async function runSelect(store, sparql) {
+    if (!comunicaEngine) {
+      throw new Error('Comunica engine not initialized.');
+    }
     const result = await comunicaEngine.queryBindings(sparql, {
       sources: [{ type: 'rdfjsSource', value: store }]
     });
@@ -58,6 +95,9 @@ const { newEngine } = window.Comunica;
   }
 
   async function runAsk(store, sparql) {
+    if (!comunicaEngine) {
+      throw new Error('Comunica engine not initialized.');
+    }
     const result = await comunicaEngine.queryBoolean(sparql, {
       sources: [{ type: 'rdfjsSource', value: store }]
     });
@@ -86,11 +126,13 @@ const { newEngine } = window.Comunica;
     const OWL_ONTOLOGY = 'http://www.w3.org/2002/07/owl#Ontology';
 
     const it = store.match(null, null, null);
-    let quad;
-    while ((quad = it.next()).value) {
+    let r = it.next();
+    while (!r.done) {
+      const quad = r.value;
       if (quad.predicate.value === RDF_TYPE && quad.object.value === OWL_ONTOLOGY) {
         return quad.subject.value;
       }
+      r = it.next();
     }
     return 'urn:ontology:unknown';
   }
