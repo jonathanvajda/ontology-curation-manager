@@ -17,10 +17,15 @@
 
   <pre id="status"></pre>
 
-  <!-- Your bundled JS that exposes App.evaluateAllQueries -->
-  <script type="module">
-    import { evaluateAllQueries } from './app/engine.js';
+  <!-- 1) Your libs -->
+  <script src="app/n3.min.js"></script>
+  <script src="app/comunica-browser.js"></script>
 
+  <!-- 2) Our engine that uses those globals -->
+  <script src="app/engine.js"></script>
+
+  <!-- 3) Wire the UI to the engine -->
+  <script>
     const fileInput = document.getElementById('ontologyFile');
     const btn = document.getElementById('runChecksBtn');
     const statusEl = document.getElementById('status');
@@ -38,7 +43,7 @@
       statusEl.textContent = 'Running checks (see console for detailed output)…';
 
       try {
-        const results = await evaluateAllQueries(text, file.name);
+        const results = await window.OntologyChecks.evaluateAllQueries(text, file.name);
         console.log('Normalized results:', results);
         statusEl.textContent =
           `Checks completed. ${results.length} result rows. See console for details.`;
