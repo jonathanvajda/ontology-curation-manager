@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@comunica/query-sparql": "^4.5.0",
+    "n3": "^1.26.0"
+  }
+}

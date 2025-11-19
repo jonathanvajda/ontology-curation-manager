@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "queries": [
+    {
+      "id": "q_duplicateLabels",
+      "file": "q_duplicateLabels.rq",
+      "title": "Duplicate rdfs:label across resources",
+      "kind": "SELECT",
+      "polarity": "matchMeansFail",
+      "checksConformityTo": "req_uniqueLabels",
+      "scope": "TBox",
+      "severity": "warning",
+      "resultShape": "RESOURCE_ONLY"
+    },
+    {
+      "id": "q_avoidPunning",
+      "file": "q_avoidPunning_ask.rq",
+      "title": "Ontology avoids class/individual punning",
+      "kind": "ASK",
+      "polarity": "trueMeansPass",
+      "checksConformityTo": "req_noPunning",
+      "scope": "ontology",
+      "severity": "error",
+      "resultShape": "NONE"
+    }
+  ],
+  "requirements": [
+    { "id": "req_uniqueLabels", "type": "requirement", "weight": 1 },
+    { "id": "req_noPunning", "type": "requirement", "weight": 1 }
+  ]
+}

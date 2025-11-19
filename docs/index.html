@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Ontology Checks – Phase 1</title>
+</head>
+<body>
+  <h1>Ontology Checks – Phase 1</h1>
+
+  <p>
+    Select an ontology file (e.g., TTL) and click "Run checks".<br />
+    Results will be logged to the browser console.
+  </p>
+
+  <input type="file" id="ontologyFile" accept=".ttl,.rdf,.owl,.nt,.nq,.trig,.jsonld" />
+  <button id="runChecksBtn">Run checks</button>
+
+  <pre id="status"></pre>
+
+  <!-- Your bundled JS that exposes App.evaluateAllQueries -->
+  <script type="module">
+    import { evaluateAllQueries } from './app/engine.js';
+
+    const fileInput = document.getElementById('ontologyFile');
+    const btn = document.getElementById('runChecksBtn');
+    const statusEl = document.getElementById('status');
+
+    btn.addEventListener('click', async () => {
+      const file = fileInput.files[0];
+      if (!file) {
+        alert('Please select an ontology file first.');
+        return;
+      }
+
+      statusEl.textContent = 'Reading file…';
+
+      const text = await file.text();
+      statusEl.textContent = 'Running checks (see console for detailed output)…';
+
+      try {
+        const results = await evaluateAllQueries(text, file.name);
+        console.log('Normalized results:', results);
+        statusEl.textContent =
+          `Checks completed. ${results.length} result rows. See console for details.`;
+      } catch (err) {
+        console.error('Error running checks:', err);
+        statusEl.textContent = 'Error: ' + err.message;
+      }
+    });
+  </script>
+</body>
+</html>
