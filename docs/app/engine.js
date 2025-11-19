@@ -2,6 +2,9 @@
 // Phase 1 core: use global N3 and Comunica (from browser bundles)
 // Exposes window.OntologyChecks.evaluateAllQueries(text, fileName)
 
+const { Parser, Store } = window.N3;
+const { newEngine } = window.Comunica;
+
 (function () {
   if (!window.N3) {
     console.error('N3 global not found. Make sure n3.min.js is loaded before engine.js.');
