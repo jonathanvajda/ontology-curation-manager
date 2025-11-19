@@ -28,7 +28,7 @@
       return Comunica.newEngine();
     }
 
-    // Case 2: bundle exposes QueryEngine class (Comunica QueryEngine browser bundle)
+    // Case 2: bundle exposes QueryEngine class
     if (typeof Comunica.QueryEngine === 'function') {
       console.info('[Comunica] Using new Comunica.QueryEngine()');
       return new Comunica.QueryEngine();
@@ -48,7 +48,6 @@
     comunicaEngine = createComunicaEngine();
   } catch (e) {
     console.error('Failed to create Comunica engine:', e);
-    // We still define window.OntologyChecks below, but calls will just throw.
   }
 
   function guessFormatFromFilename(name) {
@@ -75,19 +74,73 @@
     return store;
   }
 
+  // ------- Helpers to consume Comunica bindings streams in multiple shapes -------
+
+  async function collectBindingsStream(stream) {
+    // Case A: async iterable (modern Comunica)
+    if (stream && typeof stream[Symbol.asyncIterator] === 'function') {
+      const rows = [];
+      for await (const binding of stream) {
+        rows.push(binding);
+      }
+      return rows;
+    }
+
+    // Case B: Node-style EventEmitter: data/end/error
+    if (stream && typeof stream.on === 'function') {
+      return await new Promise((resolve, reject) => {
+        const rows = [];
+        stream.on('data', binding => rows.push(binding));
+        stream.on('end', () => resolve(rows));
+        stream.on('error', err => reject(err));
+      });
+    }
+
+    console.error('Unknown bindings stream shape:', stream);
+    throw new Error('Unsupported bindings stream type');
+  }
+
   async function runSelect(store, sparql) {
     if (!comunicaEngine) {
       throw new Error('Comunica engine not initialized.');
     }
-    const result = await comunicaEngine.queryBindings(sparql, {
-      sources: [{ type: 'rdfjsSource', value: store }]
-    });
+
+    let bindingsStream;
+
+    // Prefer queryBindings if present
+    if (typeof comunicaEngine.queryBindings === 'function') {
+      bindingsStream = await comunicaEngine.queryBindings(sparql, {
+        sources: [{ type: 'rdfjsSource', value: store }]
+      });
+    } else if (typeof comunicaEngine.query === 'function') {
+      // Fallback: query() then .bindings()
+      const result = await comunicaEngine.query(sparql, {
+        sources: [{ type: 'rdfjsSource', value: store }]
+      });
+      if (typeof result.bindings !== 'function') {
+        throw new Error('Comunica query() result has no .bindings() method');
+      }
+      bindingsStream = await result.bindings();
+    } else {
+      throw new Error('Comunica engine has neither queryBindings() nor query()');
+    }
+
+    const bindings = await collectBindingsStream(bindingsStream);
 
     const rows = [];
-    for await (const binding of result) {
+    for (const binding of bindings) {
       const obj = {};
-      for (const [varName, term] of binding.entries()) {
-        obj[varName] = term.value;
+      // binding.entries() for modern Comunica; fallback to .forEach if needed
+      if (typeof binding.entries === 'function') {
+        for (const [varName, term] of binding.entries()) {
+          obj[varName] = term.value;
+        }
+      } else if (typeof binding.forEach === 'function') {
+        binding.forEach((term, varName) => {
+          obj[varName] = term.value;
+        });
+      } else {
+        console.warn('Unexpected binding shape:', binding);
       }
       rows.push(obj);
     }
@@ -98,10 +151,26 @@
     if (!comunicaEngine) {
       throw new Error('Comunica engine not initialized.');
     }
-    const result = await comunicaEngine.queryBoolean(sparql, {
-      sources: [{ type: 'rdfjsSource', value: store }]
-    });
-    return result;
+
+    // Prefer queryBoolean if available
+    if (typeof comunicaEngine.queryBoolean === 'function') {
+      return await comunicaEngine.queryBoolean(sparql, {
+        sources: [{ type: 'rdfjsSource', value: store }]
+      });
+    }
+
+    // Fallback: query() then .booleanResult
+    if (typeof comunicaEngine.query === 'function') {
+      const result = await comunicaEngine.query(sparql, {
+        sources: [{ type: 'rdfjsSource', value: store }]
+      });
+      if (!result || !result.booleanResult) {
+        throw new Error('Comunica query() result has no booleanResult for ASK query');
+      }
+      return await result.booleanResult;
+    }
+
+    throw new Error('Comunica engine has neither queryBoolean() nor query()');
   }
 
   async function loadManifest(url) {
@@ -125,14 +194,12 @@
     const RDF_TYPE = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type';
     const OWL_ONTOLOGY = 'http://www.w3.org/2002/07/owl#Ontology';
 
-    const it = store.match(null, null, null);
-    let r = it.next();
-    while (!r.done) {
-      const quad = r.value;
+    // Use getQuads for maximum compatibility across N3 versions
+    const quads = store.getQuads(null, null, null, null);
+    for (const quad of quads) {
       if (quad.predicate.value === RDF_TYPE && quad.object.value === OWL_ONTOLOGY) {
         return quad.subject.value;
       }
-      r = it.next();
     }
     return 'urn:ontology:unknown';
   }
