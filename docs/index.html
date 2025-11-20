@@ -102,6 +102,8 @@
         const perResource = window.OntologyChecks.computePerResourceCuration(results, manifest, resources);
         console.log('Per-resource curation:', perResource);
 
+        renderCurationTable(perResource);
+
         statusEl.textContent =
           `Checks completed. ${results.length} result rows across ${perResource.length} resources.`;
       } catch (err) {
