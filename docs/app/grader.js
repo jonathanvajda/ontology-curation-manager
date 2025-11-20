@@ -7,33 +7,55 @@
     UNCURATED: 'http://purl.obolibrary.org/obo/IAO_0000124',
     METADATA_INCOMPLETE: 'http://purl.obolibrary.org/obo/IAO_0000123',
     METADATA_COMPLETE: 'http://purl.obolibrary.org/obo/IAO_0000120',
-    PENDING_FINAL_VETTING: 'http://purl.obolibrary.org/obo/IAO_0000125'
+    PENDING_FINAL_VETTING: 'http://purl.obolibrary.org/obo/IAO_0000125',
+
+    // Project-specific extensions for later
+    REQUIRES_DISCUSSION: 'http://example.org/curation-status/requires-discussion',
+    READY_FOR_RELEASE: 'http://example.org/curation-status/ready-for-release'
   };
 
   const IAO_LABELS = {
     [IAO.UNCURATED]: 'uncurated',
     [IAO.METADATA_INCOMPLETE]: 'metadata incomplete',
     [IAO.METADATA_COMPLETE]: 'metadata complete',
-    [IAO.PENDING_FINAL_VETTING]: 'pending final vetting'
+    [IAO.PENDING_FINAL_VETTING]: 'pending final vetting',
+    [IAO.REQUIRES_DISCUSSION]: 'requires discussion',
+    [IAO.READY_FOR_RELEASE]: 'ready for release'
   };
 
   /**
-   * Simple policy v1:
-   * - If any requirement fails -> metadata incomplete
-   * - Else if any recommendation fails -> metadata incomplete
-   * - Else -> metadata complete
+   * Status policy v2 (driven only by failures we can see now):
    *
-   * (UNCURATED / PENDING_FINAL_VETTING reserved for later refinements.)
+   * Let:
+   *  - hasReqFail = any required requirement failed
+   *  - hasRecFail = any recommendation failed
+   *
+   * For now:
+   *  - hasReqFail -> metadata incomplete
+   *  - !hasReqFail && hasRecFail -> metadata complete
+   *  - !hasReqFail && !hasRecFail -> pending final vetting
+   *
+   * "uncurated" will be reserved for a future heuristic:
+   *  - e.g., a dedicated query that flags "IRI + label only" resources,
+   *    or a resource that lacks hits from *any* requirement checks.
+   *
+   * "requires discussion" and "ready for release" will be assigned
+   * manually or via future higher-level signals.
    */
-  function statusPolicy(hasReqFail, hasRecFail) {
+  function statusPolicy(hasReqFail, hasRecFail, flags = {}) {
+    // Placeholder hook for future:
+    if (flags.uncurated) return IAO.UNCURATED;
+
     if (hasReqFail) return IAO.METADATA_INCOMPLETE;
-    if (!hasReqFail && hasRecFail) return IAO.METADATA_INCOMPLETE;
-    return IAO.METADATA_COMPLETE;
+    if (!hasReqFail && hasRecFail) return IAO.METADATA_COMPLETE;
+    // All requirements + all recommendations met (as far as we know)
+    return IAO.PENDING_FINAL_VETTING;
+
+    // Later you might do:
+    // if (flags.requiresDiscussion) return IAO.REQUIRES_DISCUSSION;
+    // if (flags.readyForRelease) return IAO.READY_FOR_RELEASE;
   }
 
-  /**
-   * Build a map requirementId -> "requirement" | "recommendation"
-   */
   function buildRequirementTypeMap(manifest) {
     const map = new Map();
     if (manifest && Array.isArray(manifest.requirements)) {
@@ -69,7 +91,7 @@
       const requirementId = row.requirementId || null;
       const status = row.status || 'fail';
 
-      let type = 'requirement'; // default if manifest doesn't specify
+      let type = 'requirement';
       if (requirementId && reqType.has(requirementId)) {
         type = reqType.get(requirementId);
       }
@@ -80,6 +102,7 @@
           resource,
           failedRequirements: new Set(),
           failedRecommendations: new Set()
+          // future: flags: { uncurated: false, requiresDiscussion: false, readyForRelease: false }
         };
         per.set(resource, entry);
       }
@@ -91,15 +114,17 @@
           entry.failedRecommendations.add(requirementId);
         }
       }
+
+      // FUTURE: detect resource-level flags from special queries:
+      // e.g. if (row.queryId === 'q_onlyLabel') entry.flags.uncurated = true;
     }
 
-    // Compute status for each resource
     const out = [];
     for (const entry of per.values()) {
       const hasReqFail = entry.failedRequirements.size > 0;
       const hasRecFail = entry.failedRecommendations.size > 0;
 
-      const statusIri = statusPolicy(hasReqFail, hasRecFail);
+      const statusIri = statusPolicy(hasReqFail, hasRecFail, entry.flags || {});
       const statusLabel = IAO_LABELS[statusIri] || 'unknown';
 
       out.push({
@@ -114,7 +139,6 @@
     return out;
   }
 
-  // Attach to global object
   window.OntologyChecks = window.OntologyChecks || {};
   window.OntologyChecks.computePerResourceCuration = computePerResourceCuration;
 })();
