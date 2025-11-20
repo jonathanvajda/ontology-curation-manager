@@ -92,17 +92,15 @@
       statusEl.textContent = 'Running checks…';
 
       try {
-        const results = await window.OntologyChecks.evaluateAllQueries(text, file.name);
+        const { results, resources } = await window.OntologyChecks.evaluateAllQueries(text, file.name);
         console.log('Normalized results:', results);
+        console.log('Candidate resources (labeled):', resources);
 
-        // Fetch manifest to know which requirements are "requirement" vs "recommendation"
         const manifestRes = await fetch('queries/manifest.json');
         const manifest = await manifestRes.json();
 
-        const perResource = window.OntologyChecks.computePerResourceCuration(results, manifest);
+        const perResource = window.OntologyChecks.computePerResourceCuration(results, manifest, resources);
         console.log('Per-resource curation:', perResource);
-
-        renderCurationTable(perResource);
 
         statusEl.textContent =
           `Checks completed. ${results.length} result rows across ${perResource.length} resources.`;
