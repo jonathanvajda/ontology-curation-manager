@@ -82,7 +82,7 @@
    *     failedRecommendations: string[]
    *   }
    */
-  function computePerResourceCuration(results, manifest) {
+  function computePerResourceCuration(results, manifest, allResources) {
     const reqType = buildRequirementTypeMap(manifest);
     const per = new Map();
 
@@ -105,7 +105,6 @@
             failedRecommendations: new Set(),
             flags: {
             uncurated: false,
-            // reserved for later:
             requiresDiscussion: false,
             readyForRelease: false
             }
@@ -113,7 +112,6 @@
         per.set(resource, entry);
         }
 
-        // 1) Requirement/recommendation failures (as before)
         if (status === 'fail' && requirementId) {
         if (type === 'requirement') {
             entry.failedRequirements.add(requirementId);
@@ -122,14 +120,27 @@
         }
         }
 
-        // 2) Special classifier: only IRI + rdfs:label
         if (status === 'fail' && queryId === 'q_onlyLabel') {
         entry.flags.uncurated = true;
         }
+    }
 
-        // FUTURE: other special flags
-        // if (queryId === 'q_requiresDiscussion') entry.flags.requiresDiscussion = true;
-        // if (queryId === 'q_readyForRelease')     entry.flags.readyForRelease = true;
+    // NEW: ensure all labeled resources are represented
+    if (Array.isArray(allResources)) {
+        for (const iri of allResources) {
+        if (!per.has(iri)) {
+            per.set(iri, {
+            resource: iri,
+            failedRequirements: new Set(),
+            failedRecommendations: new Set(),
+            flags: {
+                uncurated: false,
+                requiresDiscussion: false,
+                readyForRelease: false
+            }
+            });
+        }
+        }
     }
 
     const out = [];
@@ -151,6 +162,7 @@
 
     return out;
     }
+
 
   window.OntologyChecks = window.OntologyChecks || {};
   window.OntologyChecks.computePerResourceCuration = computePerResourceCuration;

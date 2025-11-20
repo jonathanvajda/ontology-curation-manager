@@ -81,12 +81,9 @@ cco:ont00001780 rdf:type owl:ObjectProperty ;
                  owl:inverseOf cco:ont00001786 ;
                  rdfs:label "has mother"@en .
 
-
+## Basically uncurated
 ###  https://www.commoncoreontologies.org/ont00001781
-cco:ont00001781 rdfs:subPropertyOf cco:ont00001996 ;
-                 owl:inverseOf cco:ont00001979 ;
-                 rdfs:label "has step sister"@en ;
-                 cco:ont00001760 "https://www.commoncoreontologies.org/AgentOntology"^^xsd:anyURI .
+cco:ont00001781 rdfs:label "has step sister"@en  .
 
 
 ###  https://www.commoncoreontologies.org/ont00001783

@@ -212,27 +212,30 @@
     if (qMeta.kind === 'SELECT') {
       const rows = await runSelect(store, queryText);
 
-      if (qMeta.polarity === 'matchMeansFail') {
-        return rows.map(row => ({
-          resource: row.resource || null,
-          queryId: qMeta.id,
-          requirementId,
-          status: 'fail',
-          severity,
-          scope,
-          details: row
-        }));
+      // Determine which variable in the row is the "resource"
+      const resourceVar = qMeta.resourceVar || 'resource';
+
+      function extractResource(row) {
+        // 1) If manifest said "this var is the resource", prefer that
+        if (row[resourceVar]) return row[resourceVar];
+        // 2) Fall back to ?resource if present
+        if (row.resource) return row.resource;
+        // 3) Otherwise, fall back to the first bound variable value
+        const vals = Object.values(row);
+        return vals.length > 0 ? vals[0] : null;
       }
 
-      return rows.map(row => ({
-        resource: row.resource || null,
+      const records = rows.map(row => ({
+        resource: extractResource(row),
         queryId: qMeta.id,
         requirementId,
-        status: 'fail',
+        status: qMeta.polarity === 'matchMeansFail' ? 'fail' : 'fail', // can extend later
         severity,
         scope,
         details: row
       }));
+
+      return records;
     }
 
     if (qMeta.kind === 'ASK') {
@@ -282,7 +285,18 @@
       }
     }
 
-    return allResults;
+    // Collect candidate resources: all subjects with rdfs:label
+    const RDFS_LABEL = 'http://www.w3.org/2000/01/rdf-schema#label';
+    const labeled = new Set();
+    const quads = store.getQuads(null, RDFS_LABEL, null, null);
+    for (const q of quads) {
+      labeled.add(q.subject.value);
+    }
+
+    return {
+      results: allResults,
+      resources: Array.from(labeled)
+    };
   }
 
   // Expose as a global for the page script
