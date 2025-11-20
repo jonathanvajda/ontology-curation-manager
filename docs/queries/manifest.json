@@ -22,6 +22,17 @@
       "scope": "ontology",
       "severity": "error",
       "resultShape": "NONE"
+    },
+    {
+      "id": "q_onlyLabel",
+      "file": "q_onlyLabel.rq",
+      "title": "Resources with only IRI + rdfs:label",
+      "kind": "SELECT",
+      "polarity": "matchMeansFail",
+      "checksConformityTo": null,
+      "scope": "resource",
+      "severity": "info",
+      "resultShape": "RESOURCE_ONLY"
     }
   ],
   "requirements": [

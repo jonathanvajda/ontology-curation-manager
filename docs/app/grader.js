@@ -87,57 +87,70 @@
     const per = new Map();
 
     for (const row of results || []) {
-      const resource = row.resource || 'urn:resource:unknown';
-      const requirementId = row.requirementId || null;
-      const status = row.status || 'fail';
+        const resource = row.resource || 'urn:resource:unknown';
+        const requirementId = row.requirementId || null;
+        const status = row.status || 'fail';
+        const queryId = row.queryId || null;
 
-      let type = 'requirement';
-      if (requirementId && reqType.has(requirementId)) {
+        let type = 'requirement';
+        if (requirementId && reqType.has(requirementId)) {
         type = reqType.get(requirementId);
-      }
+        }
 
-      let entry = per.get(resource);
-      if (!entry) {
+        let entry = per.get(resource);
+        if (!entry) {
         entry = {
-          resource,
-          failedRequirements: new Set(),
-          failedRecommendations: new Set()
-          // future: flags: { uncurated: false, requiresDiscussion: false, readyForRelease: false }
+            resource,
+            failedRequirements: new Set(),
+            failedRecommendations: new Set(),
+            flags: {
+            uncurated: false,
+            // reserved for later:
+            requiresDiscussion: false,
+            readyForRelease: false
+            }
         };
         per.set(resource, entry);
-      }
-
-      if (status === 'fail' && requirementId) {
-        if (type === 'requirement') {
-          entry.failedRequirements.add(requirementId);
-        } else if (type === 'recommendation') {
-          entry.failedRecommendations.add(requirementId);
         }
-      }
 
-      // FUTURE: detect resource-level flags from special queries:
-      // e.g. if (row.queryId === 'q_onlyLabel') entry.flags.uncurated = true;
+        // 1) Requirement/recommendation failures (as before)
+        if (status === 'fail' && requirementId) {
+        if (type === 'requirement') {
+            entry.failedRequirements.add(requirementId);
+        } else if (type === 'recommendation') {
+            entry.failedRecommendations.add(requirementId);
+        }
+        }
+
+        // 2) Special classifier: only IRI + rdfs:label
+        if (status === 'fail' && queryId === 'q_onlyLabel') {
+        entry.flags.uncurated = true;
+        }
+
+        // FUTURE: other special flags
+        // if (queryId === 'q_requiresDiscussion') entry.flags.requiresDiscussion = true;
+        // if (queryId === 'q_readyForRelease')     entry.flags.readyForRelease = true;
     }
 
     const out = [];
     for (const entry of per.values()) {
-      const hasReqFail = entry.failedRequirements.size > 0;
-      const hasRecFail = entry.failedRecommendations.size > 0;
+        const hasReqFail = entry.failedRequirements.size > 0;
+        const hasRecFail = entry.failedRecommendations.size > 0;
 
-      const statusIri = statusPolicy(hasReqFail, hasRecFail, entry.flags || {});
-      const statusLabel = IAO_LABELS[statusIri] || 'unknown';
+        const statusIri = statusPolicy(hasReqFail, hasRecFail, entry.flags || {});
+        const statusLabel = IAO_LABELS[statusIri] || 'unknown';
 
-      out.push({
+        out.push({
         resource: entry.resource,
         statusIri,
         statusLabel,
         failedRequirements: Array.from(entry.failedRequirements),
         failedRecommendations: Array.from(entry.failedRecommendations)
-      });
+        });
     }
 
     return out;
-  }
+    }
 
   window.OntologyChecks = window.OntologyChecks || {};
   window.OntologyChecks.computePerResourceCuration = computePerResourceCuration;
