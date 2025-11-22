@@ -62,14 +62,26 @@
     return 'text/turtle';
   }
 
-  async function loadOntologyIntoStore(text, filename) {
-    if (!Parser || !Store) {
-      throw new Error('N3.Parser or N3.Store not available.');
+  /**
+   * Load an ontology (TTL/RDF/XML/N-Triples/etc.) into an N3.Store.
+   * Uses Comunica's parsing / media type guessing.
+   */
+  async function loadOntologyIntoStore(text, fileName) {
+    const store = new N3.Store();
+
+    // Comunica parser engine
+    const engine = newEngine();
+
+    const result = await engine.queryQuads(text, {
+      baseIRI: fileName || 'file.ttl'
+    });
+
+    // Consume the stream
+    const quads = [];
+    for await (const q of result) {
+      quads.push(q);
     }
-    const format = guessFormatFromFilename(filename);
-    const parser = new Parser({ format });
-    const store = new Store();
-    const quads = parser.parse(text);
+
     store.addQuads(quads);
     return store;
   }
