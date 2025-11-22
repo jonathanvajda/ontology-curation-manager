@@ -7,7 +7,6 @@ import {
 } from './grader.js';
 
 const fileInput = document.getElementById('ontologyFile');
-const btnRun = document.getElementById('runChecksBtn');
 const btnCsv = document.getElementById('downloadResultsCsvBtn');
 const btnYaml = document.getElementById('downloadOntologyYamlBtn');
 const statusEl = document.getElementById('status');
@@ -46,6 +45,7 @@ async function evaluateFile(file) {
   };
 }
 
+/**
 document.getElementById('runBatchBtn').addEventListener('click', async () => {
   const files = Array.from(document.getElementById('ontologyFiles').files || []);
   if (!files.length) {
@@ -64,6 +64,7 @@ document.getElementById('runBatchBtn').addEventListener('click', async () => {
   // Now we have an array of { fileName, ontologyIri, ontologyReport, ... }
   renderDashboard(batch);
 });
+*/
 
 function renderDashboard(batchReports) {
   if (!batchReports || !batchReports.length) {
@@ -226,7 +227,7 @@ function ontologyReportToYaml(report) {
   return lines.join('\n') + '\n';
 }
 
-btnRun.addEventListener('click', async () => {
+document.getElementById('runBatchBtn').addEventListener('click', async () => {
   const file = fileInput.files[0];
   if (!file) {
     alert('Please select an ontology file first.');
