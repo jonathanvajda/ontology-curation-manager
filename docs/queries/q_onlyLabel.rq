@@ -10,5 +10,5 @@ WHERE {
     ?resource ?p ?o .
     FILTER (?p != rdfs:label)
   }
-  (BIND("Effectively uncurated" AS ?violation))
+  BIND("Effectively uncurated" AS ?violation)
 }

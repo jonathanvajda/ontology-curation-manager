@@ -17,5 +17,5 @@ WHERE {
     ?resource skos:definition ?definition .
     FILTER (lang(?definition) = "en")
   }
-  (BIND("Named individual is missing definite description" AS ?violation))
+  BIND("Named individual is missing definite description" AS ?violation)
 }

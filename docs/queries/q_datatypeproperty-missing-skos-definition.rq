@@ -18,5 +18,5 @@ WHERE {
     ?resource skos:definition ?definition .
     FILTER (lang(?definition) = "en")
   }
-  (BIND("Datatype property is missing definition" AS ?violation))
+  BIND("Datatype property is missing definition" AS ?violation)
 }

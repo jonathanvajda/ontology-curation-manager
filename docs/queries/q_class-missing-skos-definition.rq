@@ -17,5 +17,5 @@ WHERE {
     ?resource skos:definition ?definition .
     FILTER (lang(?definition) = "en")
   }
-  (BIND("Class is missing definition" AS ?violation))
+  BIND("Class is missing definition" AS ?violation)
 }

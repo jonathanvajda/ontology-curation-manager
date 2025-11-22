@@ -18,5 +18,5 @@ WHERE {
     ?resource rdfs:label ?label .
     FILTER (lang(?label) = "en")
   }
-  (BIND("Object property is missing label" AS ?violation))
+  BIND("Object property is missing label" AS ?violation)
 }

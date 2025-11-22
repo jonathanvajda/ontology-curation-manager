@@ -16,5 +16,5 @@ WHERE {
   FILTER NOT EXISTS {
     ?resource rdfs:subClassOf+ obo:BFO_0000001 .
   }
-  (BIND("Class is not a subclass of BFO:entity" AS ?violation))
+  BIND("Class is not a subclass of BFO:entity" AS ?violation)
 }

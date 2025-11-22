@@ -6,5 +6,5 @@ WHERE {
   ?resource rdfs:label ?label .
   ?resource2 rdfs:label ?label .
   FILTER (?resource != ?resource2)
-  (BIND("Resource labels collide" AS ?violation))
+  BIND("Resource labels collide" AS ?violation)
 }

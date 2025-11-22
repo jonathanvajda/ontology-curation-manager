@@ -14,5 +14,5 @@ WHERE {
   ?resource a owl:Class .
   FILTER (?resource != owl:Class)
   FILTER NOT EXISTS { ?resource rdfs:subClassOf ?parent . }
-  (BIND("Class is missing a subclass axiom" AS ?violation))
+  BIND("Class is missing a subclass axiom" AS ?violation)
 }

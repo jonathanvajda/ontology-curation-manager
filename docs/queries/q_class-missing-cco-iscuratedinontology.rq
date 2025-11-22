@@ -17,5 +17,5 @@ WHERE {
   FILTER NOT EXISTS {
     ?resource cco:ont00001760 ?value .
   }
-  (BIND("Class is missing cco:ont00001760 'is curated in ontology' tag" AS ?violation))
+  BIND("Class is missing cco:ont00001760 'is curated in ontology' tag" AS ?violation)
 }

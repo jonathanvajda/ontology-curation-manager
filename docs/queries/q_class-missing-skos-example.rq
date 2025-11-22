@@ -18,5 +18,5 @@ WHERE {
     ?resource skos:example ?example .
     FILTER (lang(?example) = "en")
   }
-  (BIND("Class is missing skos:example" AS ?violation))
+  BIND("Class is missing skos:example" AS ?violation)
 }

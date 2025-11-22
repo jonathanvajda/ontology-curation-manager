@@ -17,5 +17,5 @@ WHERE {
     ?resource skos:definition ?definition .
     FILTER (lang(?definition) = "en")
   }
-  (BIND("Object property is missing definition" AS ?violation))
+  BIND("Object property is missing definition" AS ?violation)
 }
