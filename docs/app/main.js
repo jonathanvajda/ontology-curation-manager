@@ -45,27 +45,6 @@ async function evaluateFile(file) {
   };
 }
 
-/**
-document.getElementById('runBatchBtn').addEventListener('click', async () => {
-  const files = Array.from(document.getElementById('ontologyFiles').files || []);
-  if (!files.length) {
-    alert('Please select one or more ontology files.');
-    return;
-  }
-
-  // For MVP: run them sequentially
-  const batch = [];
-  for (const file of files) {
-    // (add a status line update if you like)
-    const report = await evaluateFile(file);
-    batch.push(report);
-  }
-
-  // Now we have an array of { fileName, ontologyIri, ontologyReport, ... }
-  renderDashboard(batch);
-});
-*/
-
 function renderDashboard(batchReports) {
   if (!batchReports || !batchReports.length) {
     dashboardContainer.innerHTML = '<p>No ontologies evaluated.</p>';
@@ -228,44 +207,30 @@ function ontologyReportToYaml(report) {
 }
 
 document.getElementById('runBatchBtn').addEventListener('click', async () => {
-  const file = fileInput.files[0];
-  if (!file) {
-    alert('Please select an ontology file first.');
+  const filesInput = document.getElementById('ontologyFiles');  // <-- batch input
+  if (!filesInput) {
+    alert("Batch input #ontologyFiles not found in the DOM.");
     return;
   }
 
-  statusEl.textContent = 'Reading file…';
-  tableContainer.innerHTML = '';
-  ontologyReportContainer.innerHTML = '';
-  lastResults = null;
-  lastPerResource = null;
-  lastOntologyReport = null;
-
-  const text = await file.text();
-  statusEl.textContent = 'Running checks…';
-
-  try {
-    const { results, resources, ontologyIri } = await evaluateAllQueries(text, file.name);
-    const manifestRes = await fetch('queries/manifest.json');
-    const manifest = await manifestRes.json();
-
-    const perResource = computePerResourceCuration(results, manifest, resources);
-    const ontologyReport = computeOntologyReport(results, manifest, ontologyIri);
-
-    lastResults = results;
-    lastPerResource = perResource;
-    lastOntologyReport = ontologyReport;
-
-    renderOntologyReport(ontologyReport);
-    renderCurationTable(perResource);
-
-    statusEl.textContent =
-      `Checks completed. ${results.length} result rows across ${perResource.length} resources.`;
-  } catch (err) {
-    console.error('Error running checks:', err);
-    statusEl.textContent = 'Error: ' + err.message;
+  const files = Array.from(filesInput.files || []);
+  if (!files.length) {
+    alert("Please select one or more ontology files.");
+    return;
   }
+
+  statusEl.textContent = "Running batch checks…";
+
+  const batch = [];
+  for (const file of files) {
+    const report = await evaluateFile(file);
+    batch.push(report);
+  }
+
+  renderDashboard(batch);
+  statusEl.textContent = `Completed ${batch.length} ontology checks.`;
 });
+
 
 btnCsv.addEventListener('click', () => {
   if (!lastResults) {
