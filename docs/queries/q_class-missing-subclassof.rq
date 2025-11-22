@@ -14,4 +14,5 @@ WHERE {
   ?resource a owl:Class .
   FILTER (?resource != owl:Class)
   FILTER NOT EXISTS { ?resource rdfs:subClassOf ?parent . }
+  FILTER(isIRI(?resource))
 }
