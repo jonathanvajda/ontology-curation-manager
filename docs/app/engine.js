@@ -298,9 +298,43 @@
       resources: Array.from(labeled)
     };
   }
-
-  // Expose as a global for the page script
-  window.OntologyChecks = {
-    evaluateAllQueries
-  };
 })();
+
+
+async function evaluateAllQueries(ontologyText, fileName) {
+  const store = await loadOntologyIntoStore(ontologyText, fileName || 'ontology.ttl');
+  const manifest = await loadManifest('queries/manifest.json');
+
+  const allResults = [];
+
+  for (const qMeta of manifest.queries) {
+    try {
+      const queryText = await loadQueryText(qMeta, 'queries/');
+      const rows = await evaluateSingleQuery(store, qMeta, queryText);
+      allResults.push(...rows);
+    } catch (err) {
+      console.error(`Error evaluating query ${qMeta.id}:`, err);
+    }
+  }
+
+  // Collect candidate resources: all subjects with rdfs:label
+  const RDFS_LABEL = 'http://www.w3.org/2000/01/rdf-schema#label';
+  const labeled = new Set();
+  const quads = store.getQuads(null, RDFS_LABEL, null, null);
+  for (const q of quads) {
+    labeled.add(q.subject.value);
+  }
+
+  const ontologyIri = guessOntologyIri(store);
+
+  return {
+    results: allResults,
+    resources: Array.from(labeled),
+    ontologyIri
+  };
+}
+
+// Expose as a global for the page script
+window.OntologyChecks = {
+  evaluateAllQueries
+};
