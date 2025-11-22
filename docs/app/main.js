@@ -8,7 +8,6 @@ import {
 
 const fileInput = document.getElementById('ontologyFile');
 const btnRun = document.getElementById('runChecksBtn');
-const runBatchBtn = document.getElementById('runBatchBtn');
 const btnCsv = document.getElementById('downloadResultsCsvBtn');
 const btnYaml = document.getElementById('downloadOntologyYamlBtn');
 const statusEl = document.getElementById('status');
@@ -47,7 +46,7 @@ async function evaluateFile(file) {
   };
 }
 
-runBatchBtn.addEventListener('click', async () => {
+document.getElementById('runBatchBtn').addEventListener('click', async () => {
   const files = Array.from(document.getElementById('ontologyFiles').files || []);
   if (!files.length) {
     alert('Please select one or more ontology files.');
