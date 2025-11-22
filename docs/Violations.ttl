@@ -23,12 +23,17 @@
 #    Annotation properties
 #################################################################
 
-###  http://purl.org/dc/terms/bibliographicCitation
-dcterms:bibliographicCitation rdf:type owl:AnnotationProperty .
 
-###  http://purl.org/dc/terms/created
-dcterms:created rdf:type owl:AnnotationProperty .
+cco:AnnotationMissingLabel rdf:type owl:AnnotationProperty ;
+rdfs:comment "Missing label".
 
+cco:AnnotationMissingDefinition rdf:type owl:AnnotationProperty ;
+rdfs:label "Annotation is Missing a Definition" ;
+rdfs:comment "Missing definition".
+
+cco:AnnotationMissingLabelLang rdf:type owl:AnnotationProperty ;
+rdfs:label "Annotation is Missing a Label" ;
+rdfs:comment "Missing language tag" .
 
 ###  http://purl.org/dc/terms/creator
 dcterms:creator rdf:type owl:AnnotationProperty .
