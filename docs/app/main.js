@@ -7,6 +7,7 @@ import {
 } from './grader.js';
 
 const fileInput = document.getElementById('ontologyFile');
+const btnRun = document.getElementById('runChecksBtn');
 const btnCsv = document.getElementById('downloadResultsCsvBtn');
 const btnYaml = document.getElementById('downloadOntologyYamlBtn');
 const statusEl = document.getElementById('status');
@@ -206,8 +207,48 @@ function ontologyReportToYaml(report) {
   return lines.join('\n') + '\n';
 }
 
+btnRun.addEventListener('click', async () => {
+  const file = fileInput.files[0];
+  if (!file) {
+    alert('Please select an ontology file first.');
+    return;
+  }
+
+  statusEl.textContent = 'Reading file…';
+  tableContainer.innerHTML = '';
+  ontologyReportContainer.innerHTML = '';
+  lastResults = null;
+  lastPerResource = null;
+  lastOntologyReport = null;
+
+  const text = await file.text();
+  statusEl.textContent = 'Running checks…';
+
+  try {
+    const { results, resources, ontologyIri } = await evaluateAllQueries(text, file.name);
+    const manifestRes = await fetch('queries/manifest.json');
+    const manifest = await manifestRes.json();
+
+    const perResource = computePerResourceCuration(results, manifest, resources);
+    const ontologyReport = computeOntologyReport(results, manifest, ontologyIri);
+
+    lastResults = results;
+    lastPerResource = perResource;
+    lastOntologyReport = ontologyReport;
+
+    renderOntologyReport(ontologyReport);
+    renderCurationTable(perResource);
+
+    statusEl.textContent =
+      `Checks completed. ${results.length} result rows across ${perResource.length} resources.`;
+  } catch (err) {
+    console.error('Error running checks:', err);
+    statusEl.textContent = 'Error: ' + err.message;
+  }
+});
+
 document.getElementById('runBatchBtn').addEventListener('click', async () => {
-  const filesInput = document.getElementById('ontologyFiles');  // <-- batch input
+  const filesInput = document.getElementById('ontologyFiles');
   if (!filesInput) {
     alert("Batch input #ontologyFiles not found in the DOM.");
     return;
