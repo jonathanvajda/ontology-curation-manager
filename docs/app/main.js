@@ -28,6 +28,78 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
+async function evaluateFile(file) {
+  const text = await file.text();
+  const { results, resources, ontologyIri } = await evaluateAllQueries(text, file.name);
+  const manifestRes = await fetch('queries/manifest.json');
+  const manifest = await manifestRes.json();
+
+  const perResource = computePerResourceCuration(results, manifest, resources);
+  const ontologyReport = computeOntologyReport(results, manifest, ontologyIri);
+
+  return {
+    fileName: file.name,
+    ontologyIri,
+    ontologyReport,
+    perResource,
+    results
+  };
+}
+
+btnRunBatch.addEventListener('click', async () => {
+  const files = Array.from(document.getElementById('ontologyFiles').files || []);
+  if (!files.length) {
+    alert('Please select one or more ontology files.');
+    return;
+  }
+
+  // For MVP: run them sequentially
+  const batch = [];
+  for (const file of files) {
+    // (add a status line update if you like)
+    const report = await evaluateFile(file);
+    batch.push(report);
+  }
+
+  // Now we have an array of { fileName, ontologyIri, ontologyReport, ... }
+  renderDashboard(batch);
+});
+
+function renderDashboard(batchReports) {
+  if (!batchReports || !batchReports.length) {
+    dashboardContainer.innerHTML = '<p>No ontologies evaluated.</p>';
+    return;
+  }
+
+  let html = '<h2>Ontology dashboard</h2>';
+  html += '<table border="1" cellpadding="4" cellspacing="0">';
+  html += '<thead><tr>' +
+          '<th>File</th>' +
+          '<th>Ontology IRI</th>' +
+          '<th>Status</th>' +
+          '<th># Failed Requirements</th>' +
+          '<th># Failed Recommendations</th>' +
+          '</tr></thead><tbody>';
+
+  for (const item of batchReports) {
+    const report = item.ontologyReport;
+    const failedReqs = report.requirements.filter(r => r.type === 'requirement' && r.status === 'fail').length;
+    const failedRecs = report.requirements.filter(r => r.type === 'recommendation' && r.status === 'fail').length;
+
+    html += '<tr>' +
+            `<td>${escapeHtml(item.fileName)}</td>` +
+            `<td>${escapeHtml(report.ontologyIri)}</td>` +
+            `<td>${escapeHtml(report.statusLabel)}</td>` +
+            `<td>${failedReqs}</td>` +
+            `<td>${failedRecs}</td>` +
+            '</tr>';
+  }
+
+  html += '</tbody></table>';
+  dashboardContainer.innerHTML = html;
+}
+
+
 function renderCurationTable(perResource) {
   if (!perResource || perResource.length === 0) {
     tableContainer.innerHTML = '<p>No curation results to display.</p>';

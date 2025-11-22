@@ -12,8 +12,9 @@
     Results will be logged to the browser console, and a per-resource curation table will appear below.
   </p>
 
-  <input type="file" id="ontologyFile" accept=".ttl,.rdf,.owl,.nt,.nq,.trig,.jsonld" />
-  <button id="runChecksBtn">Run checks</button>
+  <input type="file" id="ontologyFiles" accept=".ttl,.rdf,.owl,.nt,.nq,.trig,.jsonld" multiple />
+  <button id="runBatchBtn">Run checks</button>
+  <div id="dashboardContainer"></div>
   <button id="downloadResultsCsvBtn">Download Results CSV</button>
   <button id="downloadOntologyYamlBtn">Download Ontology Report YAML</button>
 
