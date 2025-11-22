@@ -9,8 +9,7 @@ PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX cco: <https://www.commoncoreontologies.org/>
 PREFIX obo: <http://purl.obolibrary.org/obo/>
 
-SELECT ?resource ?violation
-
+SELECT ?resource
 WHERE {
   ?resource a owl:Class .
   FILTER NOT EXISTS { ?resource owl:deprecated true . }
@@ -18,5 +17,4 @@ WHERE {
     ?resource rdfs:label ?label .
     FILTER (lang(?label) = "en")
   }
-  BIND("Class is missing label" AS ?violation)
 }

@@ -9,7 +9,7 @@ PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX cco: <https://www.commoncoreontologies.org/>
 PREFIX obo: <http://purl.obolibrary.org/obo/>
 
-SELECT ?resource ?violation
+SELECT ?resource
 WHERE {
   ?resource a owl:DataProperty .
   FILTER NOT EXISTS { ?resource owl:deprecated true . }
@@ -17,5 +17,4 @@ WHERE {
     ?resource skos:definition ?definition .
     FILTER (lang(?definition) = "en")
   }
-  BIND("Data property is missing definition" AS ?violation)
 }
