@@ -9,7 +9,7 @@ PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX cco: <https://www.commoncoreontologies.org/>
 PREFIX obo: <http://purl.obolibrary.org/obo/>
 
-SELECT ?resource (BIND("Named individual is missing label" AS ?violation))
+SELECT ?resource ?violation
 
 WHERE {
   ?resource a owl:NamedIndividual .
@@ -18,4 +18,5 @@ WHERE {
     ?resource rdfs:label ?label .
     FILTER (lang(?label) = "en")
   }
+  (BIND("Named individual is missing label" AS ?violation))
 }

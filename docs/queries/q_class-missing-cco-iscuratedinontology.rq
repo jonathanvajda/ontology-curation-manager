@@ -9,7 +9,7 @@ PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX cco: <https://www.commoncoreontologies.org/>
 PREFIX obo: <http://purl.obolibrary.org/obo/>
 
-SELECT ?resource (BIND("Class is missing cco:ont00001760 'is curated in ontology' tag" AS ?violation))
+SELECT ?resource ?violation
 
 WHERE {
   ?resource a owl:Class .
@@ -17,4 +17,5 @@ WHERE {
   FILTER NOT EXISTS {
     ?resource cco:ont00001760 ?value .
   }
+  (BIND("Class is missing cco:ont00001760 'is curated in ontology' tag" AS ?violation))
 }

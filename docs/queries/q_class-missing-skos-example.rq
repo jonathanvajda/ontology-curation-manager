@@ -9,8 +9,8 @@ PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX cco: <https://www.commoncoreontologies.org/>
 PREFIX obo: <http://purl.obolibrary.org/obo/>
 
+SELECT ?resource ?violation
 
-SELECT ?resource (BIND("Class is missing skos:example" AS ?violation))
 WHERE {
   ?resource a owl:Class .
   FILTER NOT EXISTS { ?resource owl:deprecated true . }
@@ -18,4 +18,5 @@ WHERE {
     ?resource skos:example ?example .
     FILTER (lang(?example) = "en")
   }
+  (BIND("Class is missing skos:example" AS ?violation))
 }
