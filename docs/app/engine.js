@@ -298,6 +298,10 @@
       resources: Array.from(labeled)
     };
   }
+  // Expose as a global for the page script
+  window.OntologyChecks = {
+    evaluateAllQueries
+  };
 })();
 
 
