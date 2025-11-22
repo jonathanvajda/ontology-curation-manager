@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Ontology Checks – Phase 2</title>
+  <title>Ontology Checks - Phase 3</title>
 </head>
 <body>
-  <h1>Ontology Checks – Phase 2</h1>
+  <h1>Ontology Checks - Phase 3</h1>
 
   <p>
     Select an ontology file (e.g., TTL) and click "Run checks".<br />
@@ -14,103 +14,20 @@
 
   <input type="file" id="ontologyFile" accept=".ttl,.rdf,.owl,.nt,.nq,.trig,.jsonld" />
   <button id="runChecksBtn">Run checks</button>
+  <button id="downloadResultsCsvBtn">Download Results CSV</button>
+  <button id="downloadOntologyYamlBtn">Download Ontology Report YAML</button>
 
   <pre id="status"></pre>
+
+  <!-- Container for the ontology-level report -->
+  <div id="ontologyReportContainer"></div>
 
   <!-- Container for the per-resource curation table -->
   <div id="curationTableContainer"></div>
 
-  <!-- 1) Your libs -->
   <script src="app/n3.min.js"></script>
   <script src="app/comunica-browser.js"></script>
-
-  <!-- 2) Engine -->
-  <script src="app/engine.js"></script>
-
-  <!-- 3) Grader -->
-  <script src="app/grader.js"></script>
-
-  <!-- 4) Wire the UI to the engine + grader -->
-  <script>
-    const fileInput = document.getElementById('ontologyFile');
-    const btn = document.getElementById('runChecksBtn');
-    const statusEl = document.getElementById('status');
-    const tableContainer = document.getElementById('curationTableContainer');
-
-    function renderCurationTable(perResource) {
-      if (!perResource || perResource.length === 0) {
-        tableContainer.innerHTML = '<p>No curation results to display.</p>';
-        return;
-      }
-
-      let html = '<table border="1" cellpadding="4" cellspacing="0">';
-      html += '<thead><tr>' +
-              '<th>Resource</th>' +
-              '<th>Curation Status</th>' +
-              '<th>Failed Requirements</th>' +
-              '<th>Failed Recommendations</th>' +
-              '</tr></thead><tbody>';
-
-      for (const row of perResource) {
-        const reqs = row.failedRequirements.join(', ') || '—';
-        const recs = row.failedRecommendations.join(', ') || '—';
-
-        html += '<tr>' +
-                '<td>' + escapeHtml(row.resource) + '</td>' +
-                '<td>' + escapeHtml(row.statusLabel) + '</td>' +
-                '<td>' + escapeHtml(reqs) + '</td>' +
-                '<td>' + escapeHtml(recs) + '</td>' +
-                '</tr>';
-      }
-
-      html += '</tbody></table>';
-      tableContainer.innerHTML = html;
-    }
-
-    // Simple HTML escaper to avoid weird characters breaking the table
-    function escapeHtml(str) {
-      if (str == null) return '';
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-    }
-
-    btn.addEventListener('click', async () => {
-      const file = fileInput.files[0];
-      if (!file) {
-        alert('Please select an ontology file first.');
-        return;
-      }
-
-      statusEl.textContent = 'Reading file…';
-      tableContainer.innerHTML = '';
-
-      const text = await file.text();
-      statusEl.textContent = 'Running checks…';
-
-      try {
-        const { results, resources } = await window.OntologyChecks.evaluateAllQueries(text, file.name);
-        console.log('Normalized results:', results);
-        console.log('Candidate resources (labeled):', resources);
-
-        const manifestRes = await fetch('queries/manifest.json');
-        const manifest = await manifestRes.json();
-
-        const perResource = window.OntologyChecks.computePerResourceCuration(results, manifest, resources);
-        console.log('Per-resource curation:', perResource);
-
-        renderCurationTable(perResource);
-
-        statusEl.textContent =
-          `Checks completed. ${results.length} result rows across ${perResource.length} resources.`;
-      } catch (err) {
-        console.error('Error running checks:', err);
-        statusEl.textContent = 'Error: ' + err.message;
-      }
-    });
-  </script>
+  <script type="module" src="app/main.js"></script>
+  
 </body>
 </html>
