@@ -6,4 +6,5 @@ ASK WHERE {
     ?resource rdf:type owl:Class .
     ?resource rdf:type owl:NamedIndividual .
   }
+FILTER(isIRI(?resource))
 }

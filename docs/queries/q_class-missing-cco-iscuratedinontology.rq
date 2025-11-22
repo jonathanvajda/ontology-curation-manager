@@ -16,4 +16,5 @@ WHERE {
   FILTER NOT EXISTS {
     ?resource cco:ont00001760 ?value .
   }
+FILTER(isIRI(?resource))
 }

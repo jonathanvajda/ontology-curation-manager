@@ -17,4 +17,5 @@ WHERE {
     ?resource skos:definition ?definition .
     FILTER (lang(?definition) = "en")
   }
+FILTER(isIRI(?resource))
 }

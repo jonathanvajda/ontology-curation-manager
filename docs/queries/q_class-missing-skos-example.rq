@@ -17,4 +17,5 @@ WHERE {
     ?resource skos:example ?example .
     FILTER (lang(?example) = "en")
   }
+FILTER(isIRI(?resource))
 }
