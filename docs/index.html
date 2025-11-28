@@ -16,6 +16,7 @@
   <button id="runChecksBtn">Run checks</button>
   <button id="runBatchBtn">Run batch checks</button>
   <div id="dashboardContainer"></div>
+  <div id="requirementDetailContainer"></div>
   <button id="downloadResultsCsvBtn">Download Results CSV</button>
   <button id="downloadOntologyYamlBtn">Download Ontology Report YAML</button>
 
@@ -24,6 +25,26 @@
   <!-- Container for the ontology-level report -->
   <div id="ontologyReportContainer"></div>
 
+    <div id="curationFilters">
+    <label>
+      Curation status:
+      <select id="statusFilter">
+        <option value="">All</option>
+        <option value="uncurated">Uncurated</option>
+        <option value="metadata incomplete">Metadata incomplete</option>
+        <option value="metadata complete">Metadata complete</option>
+        <option value="pending final vetting">Pending final vetting</option>
+      </select>
+    </label>
+
+    <label>
+      Fails requirement/recommendation:
+      <select id="requirementFilter">
+        <option value="">Any</option>
+        <!-- dynamically populate with manifest.requirements IDs + labels -->
+      </select>
+    </label>
+  </div>
   <!-- Container for the per-resource curation table -->
   <div id="curationTableContainer"></div>
 
