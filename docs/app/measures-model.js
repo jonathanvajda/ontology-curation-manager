@@ -21,6 +21,9 @@ import {
   RDFS_SUBPROPERTY_OF_IRI
 } from './engine.js';
 
+/** @typedef {import('./rdf-io.js').RdfJsQuad} RdfJsQuad */
+/** @typedef {import('./rdf-io.js').RdfJsStore} RdfJsStore */
+
 /**
  * @typedef {'single_value' | 'list_value' | 'map_value'} MeasureMetricType
  */
@@ -106,7 +109,7 @@ function isBuiltInIri(iri) {
 /**
  * Returns all named-node IRIs appearing anywhere in the store.
  *
- * @param {any} store
+ * @param {RdfJsStore} store
  * @returns {Set<string>}
  */
 function collectSignatureEntities(store) {
@@ -131,7 +134,7 @@ function collectSignatureEntities(store) {
 /**
  * Returns all declared entity IRIs.
  *
- * @param {any} store
+ * @param {RdfJsStore} store
  * @returns {Set<string>}
  */
 function collectDeclaredEntities(store) {
@@ -178,7 +181,7 @@ function incrementMetricMap(map, key) {
  * Builds a coarse expressivity label from observed construct flags.
  *
  * @param {Set<string>} constructSet
- * @param {any[]} quads
+ * @param {RdfJsQuad[]} quads
  * @returns {string}
  */
 function deriveExpressivityLabel(constructSet, quads) {
@@ -264,7 +267,7 @@ function getProfileExclusionLabel(profileKey) {
 /**
  * Returns true when one quad is best treated as an ABox-style assertion.
  *
- * @param {any} quad
+ * @param {RdfJsQuad} quad
  * @param {Set<string>} classSet
  * @param {Set<string>} individualSet
  * @returns {boolean}
@@ -284,7 +287,7 @@ function isAboxQuad(quad, classSet, individualSet) {
 /**
  * Returns true when one quad is best treated as an RBox-style assertion.
  *
- * @param {any} quad
+ * @param {RdfJsQuad} quad
  * @param {Set<string>} objectPropertySet
  * @param {Set<string>} datatypePropertySet
  * @param {Set<string>} annotationPropertySet
@@ -312,7 +315,7 @@ function isRboxQuad(quad, objectPropertySet, datatypePropertySet, annotationProp
 /**
  * Computes basic ontology measures that are reliable over the parsed RDF graph.
  *
- * @param {any} store
+ * @param {RdfJsStore} store
  * @param {{ sourceFormat?: string | null, externalDependencyCount?: number }} [options]
  * @returns {MeasureMetric[]}
  */
@@ -476,7 +479,7 @@ export function computeBasicMeasures(store, options = {}) {
       quad?.subject?.termType === 'NamedNode' ? getNamespaceFromIri(String(quad.subject.value)) : null,
       quad?.predicate?.termType === 'NamedNode' ? getNamespaceFromIri(String(quad.predicate.value)) : null,
       quad?.object?.termType === 'NamedNode' ? getNamespaceFromIri(String(quad.object.value)) : null
-    ].filter(Boolean));
+    ].filter((namespace) => typeof namespace === 'string' && namespace));
     for (const namespace of namespaces) {
       namespaceAxiomCounts.set(namespace, (namespaceAxiomCounts.get(namespace) || 0) + 1);
     }

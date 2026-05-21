@@ -9,19 +9,92 @@
  * RDF/XML use browser-global adapter libraries before being bridged into N3.
  */
 
-/** @typedef {{ N3?: any, jsonld?: any, $rdf?: any }} RuntimeLibraries */
+/**
+ * @typedef {Object} RdfJsTerm
+ * @property {string} termType
+ * @property {string} value
+ * @property {string} [language]
+ * @property {RdfJsTerm} [datatype]
+ */
+
+/**
+ * @typedef {Object} RdfJsQuad
+ * @property {RdfJsTerm} subject
+ * @property {RdfJsTerm} predicate
+ * @property {RdfJsTerm} object
+ * @property {RdfJsTerm} graph
+ */
+
+/**
+ * @typedef {Object} RdfJsStore
+ * @property {(subject?: unknown, predicate?: unknown, object?: unknown, graph?: unknown) => RdfJsQuad[]} getQuads
+ * @property {(quad: RdfJsQuad) => void} addQuad
+ * @property {(quads: RdfJsQuad[]) => void} [addQuads]
+ * @property {number} [size]
+ */
+
+/**
+ * @typedef {Object} RdfJsDataFactory
+ * @property {(value: string) => RdfJsTerm} namedNode
+ * @property {(value?: string) => RdfJsTerm} blankNode
+ * @property {(value: string, languageOrDatatype?: string | RdfJsTerm) => RdfJsTerm} literal
+ * @property {(subject: RdfJsTerm, predicate: RdfJsTerm, object: RdfJsTerm, graph?: RdfJsTerm) => RdfJsQuad} quad
+ */
+
+/**
+ * @typedef {Object} N3Runtime
+ * @property {new (quads?: RdfJsQuad[]) => RdfJsStore} [Store]
+ * @property {RdfJsDataFactory} [DataFactory]
+ * @property {new (options?: Record<string, unknown>) => { parse: (text: string, callback: (error: Error | null, quad: RdfJsQuad | null, prefixes?: Record<string, string>) => void) => void }} [Parser]
+ * @property {new (options?: Record<string, unknown>) => { addQuads: (quads: RdfJsQuad[]) => void, end: (callback: (error: Error | null, result?: string) => void) => void }} [Writer]
+ */
+
+/**
+ * @typedef {Object} JsonLdRuntime
+ * @property {(documentValue: unknown, options?: Record<string, unknown>) => Promise<string>} [toRDF]
+ * @property {(nquads: string, options?: Record<string, unknown>) => Promise<unknown>} [fromRDF]
+ */
+
+/**
+ * @typedef {Object} RdflibTerm
+ * @property {string} termType
+ * @property {string} value
+ * @property {string} [language]
+ * @property {{ value?: string }} [datatype]
+ * @property {RdflibTerm[]} [elements]
+ */
+
+/**
+ * @typedef {Object} RdflibGraph
+ * @property {Array<{ subject: RdflibTerm, predicate: RdflibTerm, object: RdflibTerm }>} [statements]
+ * @property {(subject: RdflibTerm, predicate: RdflibTerm, object: RdflibTerm, graph?: RdflibTerm) => void} [add]
+ */
+
+/**
+ * @typedef {Object} RdflibRuntime
+ * @property {(value: string) => RdflibTerm} [namedNode]
+ * @property {(value?: string) => RdflibTerm} [blankNode]
+ * @property {(value: string, languageOrDatatype?: string | RdflibTerm) => RdflibTerm} [literal]
+ * @property {() => RdflibTerm} [defaultGraph]
+ * @property {() => RdflibGraph} [graph]
+ * @property {(text: string, graph: RdflibGraph, baseIri: string, mimeType: string, callback: (error: Error | null) => void) => void} [parse]
+ * @property {(target: unknown, graph: RdflibGraph, baseIri?: string, mimeType?: string) => string | undefined} [serialize]
+ * @property {(graph: RdflibGraph) => { suggestNamespaces?: (prefixes: Record<string, string>) => void, setBase?: (baseIri: string) => void, statementsToXML?: (statements: RdflibGraph['statements']) => string }} [Serializer]
+ */
+
+/** @typedef {{ N3?: N3Runtime, jsonld?: JsonLdRuntime, $rdf?: RdflibRuntime }} RuntimeLibraries */
 
 /** @typedef {'text/turtle' | 'application/n-triples' | 'application/n-quads' | 'application/trig' | 'text/n3' | 'application/ld+json' | 'application/rdf+xml'} RdfFormat */
 
 /**
  * @typedef {Object} ParsedOntology
- * @property {any} store
+ * @property {RdfJsStore} store
  * @property {Record<string, string>} prefixes
  * @property {RdfFormat} sourceFormat
  * @property {string | null} baseIri
  */
 
-/** @type {any} */
+/** @type {typeof globalThis & RuntimeLibraries} */
 const runtimeWindow = typeof window !== 'undefined' ? window : globalThis;
 
 export const RDF_FORMATS = Object.freeze({
@@ -82,7 +155,7 @@ const RDF_NIL_IRI = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil';
  * Returns the runtime libraries, optionally overridden for testing.
  *
  * @param {RuntimeLibraries} [overrides]
- * @returns {Required<RuntimeLibraries>}
+ * @returns {RuntimeLibraries}
  */
 function getRuntimeLibraries(overrides = {}) {
   return {
@@ -182,7 +255,7 @@ export function isSupportedRdfFileName(fileName) {
  * Returns the N3 Store constructor.
  *
  * @param {RuntimeLibraries} [runtime]
- * @returns {any}
+ * @returns {new (quads?: RdfJsQuad[]) => RdfJsStore}
  */
 function getStoreConstructor(runtime) {
   const { N3 } = getRuntimeLibraries(runtime);
@@ -197,7 +270,7 @@ function getStoreConstructor(runtime) {
  * Returns the N3 DataFactory.
  *
  * @param {RuntimeLibraries} [runtime]
- * @returns {any}
+ * @returns {RdfJsDataFactory}
  */
 function getDataFactory(runtime) {
   const { N3 } = getRuntimeLibraries(runtime);
@@ -211,9 +284,9 @@ function getDataFactory(runtime) {
 /**
  * Converts an RDF/JS term to an rdflib term.
  *
- * @param {any} term
+ * @param {RdfJsTerm} term
  * @param {RuntimeLibraries} [runtime]
- * @returns {any}
+ * @returns {RdflibTerm}
  */
 export function convertRdfJsTermToRdflib(term, runtime) {
   const { $rdf } = getRuntimeLibraries(runtime);
@@ -225,19 +298,36 @@ export function convertRdfJsTermToRdflib(term, runtime) {
   }
 
   switch (term.termType) {
-    case 'NamedNode':
+    case 'NamedNode': {
+      if (typeof $rdf.namedNode !== 'function') {
+        throw new Error('rdflib namedNode() is unavailable in the loaded runtime.');
+      }
       return $rdf.namedNode(term.value);
-    case 'BlankNode':
+    }
+    case 'BlankNode': {
+      if (typeof $rdf.blankNode !== 'function') {
+        throw new Error('rdflib blankNode() is unavailable in the loaded runtime.');
+      }
       return $rdf.blankNode(term.value);
-    case 'Literal':
+    }
+    case 'Literal': {
+      if (typeof $rdf.literal !== 'function' || typeof $rdf.namedNode !== 'function') {
+        throw new Error('rdflib literal() is unavailable in the loaded runtime.');
+      }
       if (term.language) {
         return $rdf.literal(term.value, term.language);
       }
       return $rdf.literal(
         term.value,
-        convertRdfJsTermToRdflib(term.datatype, runtime)
+        term.datatype
+          ? convertRdfJsTermToRdflib(term.datatype, runtime)
+          : $rdf.namedNode('http://www.w3.org/2001/XMLSchema#string')
       );
+    }
     case 'DefaultGraph':
+      if (typeof $rdf.namedNode !== 'function') {
+        throw new Error('rdflib namedNode() is unavailable in the loaded runtime.');
+      }
       return $rdf.defaultGraph ? $rdf.defaultGraph() : $rdf.namedNode('');
     default:
       throw new Error(`Unsupported RDF/JS termType: ${String(term.termType)}`);
@@ -247,13 +337,16 @@ export function convertRdfJsTermToRdflib(term, runtime) {
 /**
  * Copies RDF/JS quads into an rdflib graph.
  *
- * @param {any} store
- * @param {any} graph
+ * @param {RdfJsStore} store
+ * @param {RdflibGraph} graph
  * @param {RuntimeLibraries} [runtime]
  * @returns {void}
  */
 function addRdfJsStoreToRdflibGraph(store, graph, runtime) {
   const quads = store?.getQuads ? store.getQuads(null, null, null, null) : [];
+  if (typeof graph.add !== 'function') {
+    throw new Error('rdflib graph.add() is unavailable in the loaded runtime.');
+  }
 
   for (const quad of quads) {
     graph.add(
@@ -270,7 +363,7 @@ function addRdfJsStoreToRdflibGraph(store, graph, runtime) {
 /**
  * Serializes an RDF/JS store with N3.Writer.
  *
- * @param {any} store
+ * @param {RdfJsStore} store
  * @param {RdfFormat} format
  * @param {Record<string, string>} prefixes
  * @param {string | null} baseIri
@@ -310,7 +403,7 @@ function serializeWithN3(store, format, prefixes, baseIri, runtime) {
 /**
  * Serializes an RDF/JS store to JSON-LD by way of N-Quads.
  *
- * @param {any} store
+ * @param {RdfJsStore} store
  * @param {Record<string, string>} prefixes
  * @param {string | null} baseIri
  * @param {RuntimeLibraries} [runtime]
@@ -341,7 +434,7 @@ async function serializeWithJsonLd(store, prefixes, baseIri, runtime) {
 /**
  * Serializes an RDF/JS store to RDF/XML using rdflib.
  *
- * @param {any} store
+ * @param {RdfJsStore} store
  * @param {string | null} baseIri
  * @param {RuntimeLibraries} [runtime]
  * @returns {Promise<string>}
@@ -382,10 +475,10 @@ async function serializeWithRdfXml(store, baseIri, runtime) {
 /**
  * Converts an rdflib term to an RDF/JS term.
  *
- * @param {any} term
+ * @param {RdflibTerm} term
  * @param {RuntimeLibraries} [runtime]
- * @param {any} [targetStore]
- * @returns {any}
+ * @param {RdfJsStore} [targetStore]
+ * @returns {RdfJsTerm}
  */
 export function convertRdflibTermToRdfJs(term, runtime, targetStore) {
   const dataFactory = getDataFactory(runtime);
@@ -419,7 +512,7 @@ export function convertRdflibTermToRdfJs(term, runtime, targetStore) {
       const rdfRest = dataFactory.namedNode(RDF_REST_IRI);
       const rdfNil = dataFactory.namedNode(RDF_NIL_IRI);
 
-      /** @type {any[]} */
+      /** @type {RdfJsTerm[]} */
       const nodes = items.map((_item, index) => {
         if (index === 0 && typeof term.value === 'string' && term.value) {
           return dataFactory.blankNode(term.value.replace(/^_:/, ''));
@@ -552,6 +645,8 @@ async function parseWithRdfXml(text, baseIri, runtime) {
     throw new Error('N3.DataFactory not found on window.N3. Check that n3.min.js is loaded.');
   }
 
+  const parseRdfXml = $rdf.parse;
+  const dataFactory = N3.DataFactory;
   const graph = $rdf.graph();
   const Store = getStoreConstructor(runtime);
   const store = new Store();
@@ -559,7 +654,7 @@ async function parseWithRdfXml(text, baseIri, runtime) {
 
   await new Promise((resolve, reject) => {
     try {
-      $rdf.parse(text, graph, graphBaseIri, RDF_FORMATS.RDF_XML, (error) => {
+      parseRdfXml(text, graph, graphBaseIri, RDF_FORMATS.RDF_XML, (error) => {
         if (error) {
           reject(error);
           return;
@@ -577,7 +672,7 @@ async function parseWithRdfXml(text, baseIri, runtime) {
     const subject = convertRdflibTermToRdfJs(statement.subject, runtime, store);
     const predicate = convertRdflibTermToRdfJs(statement.predicate, runtime, store);
     const object = convertRdflibTermToRdfJs(statement.object, runtime, store);
-    store.addQuad(N3.DataFactory.quad(subject, predicate, object));
+    store.addQuad(dataFactory.quad(subject, predicate, object));
   }
 
   return {
@@ -624,7 +719,7 @@ export async function parseRdfInput(text, fileName = 'ontology.ttl', options = {
 /**
  * Serialization hook for later phases.
  *
- * @param {any} store
+ * @param {RdfJsStore} store
  * @param {RdfFormat} format
  * @param {{ prefixes?: Record<string, string>, baseIri?: string | null, runtime?: RuntimeLibraries }} [options]
  * @returns {Promise<string>}

@@ -953,10 +953,15 @@ function initializeApp() {
 
       const importButton = event.target.closest('[data-open-import-snippet]');
       if (importButton instanceof HTMLButtonElement) {
-        const analysisKey = importButton.getAttribute('data-open-import-snippet');
-        const importTarget = importButton.getAttribute('data-import-target');
+        const analysisKey = importButton.getAttribute('data-open-import-snippet') || '';
+        const importTargetAttribute = importButton.getAttribute('data-import-target');
+        if (!analysisKey || !importTargetAttribute) {
+          return;
+        }
+        const importTarget = String(importTargetAttribute);
+
         const analysis = lastAnalyses.find((item) => item.analysisKey === analysisKey);
-        if (!analysis || !importTarget) {
+        if (!analysis) {
           return;
         }
 
@@ -965,6 +970,7 @@ function initializeApp() {
           analysis.metadata?.imports || []
         );
 
+        /** @type {string[]} */
         let targets = [];
         let targetLabel = 'Import snippet';
         if (importTarget === '__all_missing__') {

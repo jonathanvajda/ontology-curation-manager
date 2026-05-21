@@ -228,4 +228,41 @@ describe('measures model', () => {
     expect(profileExclusions[0]).toContain('no OWL entity declarations');
     expect(profileExclusions[0]).toContain('no characteristic OWL predicates');
   });
+
+  test('computeBasicMeasures reports undeclared named entities while ignoring built-in vocabulary', async () => {
+    const { computeBasicMeasures } = await import('../docs/app/measures-model.js');
+    const { namedNode, literal, quad } = N3.DataFactory;
+
+    const store = new N3.Store([
+      quad(
+        namedNode('http://example.org/onto'),
+        namedNode('http://www.w3.org/1999/02/22-rdf-syntax-ns#type'),
+        namedNode('http://www.w3.org/2002/07/owl#Ontology')
+      ),
+      quad(
+        namedNode('http://example.org/DeclaredClass'),
+        namedNode('http://www.w3.org/1999/02/22-rdf-syntax-ns#type'),
+        namedNode('http://www.w3.org/2002/07/owl#Class')
+      ),
+      quad(
+        namedNode('http://example.org/DeclaredClass'),
+        namedNode('http://www.w3.org/2000/01/rdf-schema#subClassOf'),
+        namedNode('http://example.org/UndeclaredParent')
+      ),
+      quad(
+        namedNode('http://example.org/DeclaredClass'),
+        namedNode('http://example.org/undeclaredPredicate'),
+        literal('visible dependency')
+      )
+    ]);
+
+    const metrics = computeBasicMeasures(store, { sourceFormat: 'text/turtle' });
+    const byKey = new Map(metrics.map((metric) => [metric.metric, metric]));
+
+    expect(byKey.get('undecl_entity_count')?.metricValue).toBe(2);
+    expect(byKey.get('signature_entity_count')?.metricValue).toBe(8);
+    expect(byKey.get('namespace_entity_count')?.metricValue).toEqual(expect.arrayContaining([
+      'http://example.org/ 4'
+    ]));
+  });
 });

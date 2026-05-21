@@ -6,6 +6,8 @@ module.exports = {
     'docs/app/shared.js',
     'docs/app/grader.js',
     'docs/app/criteria.js',
+    'docs/app/rdf-io.js',
+    'docs/app/measures-model.js',
     'docs/app/render-standards.js',
     'docs/app/report-export.js'
   ]
