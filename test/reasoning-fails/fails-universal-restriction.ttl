@@ -1,0 +1,21 @@
+@prefix :    <http://example.org/reasoner-test#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+:CleanRoom a owl:Class .
+:DirtyRoom a owl:Class ;
+    owl:disjointWith :CleanRoom .
+
+:locatedIn a owl:ObjectProperty .
+
+:CleanRoomOnlyDevice a owl:Class ;
+    rdfs:subClassOf [
+        a owl:Restriction ;
+        owl:onProperty :locatedIn ;
+        owl:allValuesFrom :CleanRoom
+    ] .
+
+:device1 a owl:NamedIndividual , :CleanRoomOnlyDevice ;
+    :locatedIn :room9 .
+
+:room9 a owl:NamedIndividual , :DirtyRoom .

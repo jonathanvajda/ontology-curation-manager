@@ -1,0 +1,23 @@
+@prefix :    <http://example.org/reasoner-test#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+:Vehicle a owl:Class .
+:VIN a owl:Class .
+:hasVIN a owl:ObjectProperty .
+
+:Vehicle rdfs:subClassOf [
+    a owl:Restriction ;
+    owl:onProperty :hasVIN ;
+    owl:onClass :VIN ;
+    owl:maxQualifiedCardinality "1"^^xsd:nonNegativeInteger
+] .
+
+:car1 a owl:NamedIndividual , :Vehicle ;
+    :hasVIN :vinA , :vinB .
+
+:vinA a owl:NamedIndividual , :VIN .
+:vinB a owl:NamedIndividual , :VIN .
+
+:vinA owl:differentFrom :vinB .

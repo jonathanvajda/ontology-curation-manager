@@ -1,0 +1,10 @@
+@prefix :    <http://example.org/reasoner-test#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+
+:parentOf a owl:ObjectProperty , owl:AsymmetricProperty .
+
+:alice a owl:NamedIndividual ;
+    :parentOf :bob .
+
+:bob a owl:NamedIndividual ;
+    :parentOf :alice .
