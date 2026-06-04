@@ -18,6 +18,7 @@
     "jest": "^29.7.0"
   },
   "scripts": {
+    "build:nlp-qa-lexicon": "node ./src/lexicon-build/build-english-lexicon.js",
     "lint": "eslint . --ext .js,.mjs",
     "test": "node ./test/rdf-io.test.js",
     "test:jest": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand"

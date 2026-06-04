@@ -6,10 +6,11 @@ export default [
   js.configs.recommended,
   {
     ignores: [
-      "docs/app/comunica-browser.js",
-      "docs/app/n3.min.js",
-      "docs/app/rdflib.min.js",
-      "docs/app/jsonld.min.js"
+      "docs/app/vendor/comunica-browser.js",
+      "docs/app/vendor/compromise_v14.15.1.js",
+      "docs/app/vendor/n3.min.js",
+      "docs/app/vendor/rdflib.min.js",
+      "docs/app/vendor/jsonld.min.js"
     ]
   },
 
@@ -68,6 +69,15 @@ export default [
       // Extra hygiene (optional)
       "no-shadow": "warn",
       "no-unused-vars": ["warn", { argsIgnorePattern: "^_" }]
+    }
+  },
+  {
+    files: ["src/**/*.js"],
+    languageOptions: {
+      globals: {
+        console: "readonly",
+        process: "readonly"
+      }
     }
   },
   {
