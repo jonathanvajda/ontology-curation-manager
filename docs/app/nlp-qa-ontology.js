@@ -1,0 +1,280 @@
+// app/nlp-qa-ontology.js
+// @ts-check
+
+import {
+  CCO_ACRONYM_IRI,
+  OBO_IAO_0000115_IRI,
+  RDF_TYPE_IRI,
+  RDFS_LABEL_IRI,
+  SKOS_DEFINITION_IRI,
+  SKOS_EXAMPLE_IRI,
+  SKOS_PREF_LABEL_IRI,
+  SKOS_SCOPE_NOTE_IRI
+} from './engine.js';
+import {
+  buildNlpQaLexicon,
+  checkTextFieldWithNlpQa,
+  deriveNlpQaStatusFromIssues,
+  normalizeNlpQaCheckModes,
+  tokenizeTextIntoNlpQaTokens
+} from './nlp-qa-model.js';
+
+/** @typedef {import('./rdf-io.js').RdfJsStore} RdfJsStore */
+/** @typedef {import('./nlp-qa-model.js').NlpQaIssue} NlpQaIssue */
+/** @typedef {import('./nlp-qa-model.js').NlpQaStatus} NlpQaStatus */
+/** @typedef {import('./nlp-qa-model.js').NlpQaCheckModes} NlpQaCheckModes */
+
+/**
+ * @typedef {Object} NlpQaOntologyRow
+ * @property {string} iri
+ * @property {string} type
+ * @property {string} label
+ * @property {string} prefLabel
+ * @property {string} definition
+ * @property {string} example
+ * @property {string} scopeNote
+ * @property {string} acronym
+ * @property {boolean} modified
+ */
+
+/**
+ * @typedef {Object} NlpQaCheckedOntologyRow
+ * @property {NlpQaOntologyRow} row
+ * @property {NlpQaStatus} status
+ * @property {NlpQaIssue[]} issues
+ */
+
+export const NLP_QA_CHECKED_FIELD_NAMES = Object.freeze([
+  'label',
+  'prefLabel',
+  'definition',
+  'example',
+  'scopeNote'
+]);
+
+const FIELD_PREDICATES = Object.freeze({
+  label: [RDFS_LABEL_IRI],
+  prefLabel: [SKOS_PREF_LABEL_IRI],
+  definition: [SKOS_DEFINITION_IRI, OBO_IAO_0000115_IRI],
+  example: [SKOS_EXAMPLE_IRI],
+  scopeNote: [SKOS_SCOPE_NOTE_IRI],
+  acronym: [CCO_ACRONYM_IRI]
+});
+
+export const NLP_QA_FIELD_CHECK_MODE_NORMS = Object.freeze({
+  label: Object.freeze({ spelling: true, grammar: false, aristotelian: false }),
+  prefLabel: Object.freeze({ spelling: true, grammar: false, aristotelian: false }),
+  definition: Object.freeze({ spelling: true, grammar: true, aristotelian: true }),
+  example: Object.freeze({ spelling: true, grammar: true, aristotelian: false }),
+  scopeNote: Object.freeze({ spelling: true, grammar: true, aristotelian: false })
+});
+
+export const DEFAULT_NLP_QA_ONTOLOGY_CHECK_MODES = Object.freeze({
+  spelling: true,
+  grammar: true,
+  aristotelian: true
+});
+
+/**
+ * Returns a readable literal string for the first matching predicate.
+ *
+ * @param {RdfJsStore} store
+ * @param {string} subjectIri
+ * @param {readonly string[]} predicateIris
+ * @returns {string}
+ */
+export function getFirstLiteralValueForNlpQaPredicates(store, subjectIri, predicateIris) {
+  for (const predicateIri of predicateIris) {
+    const quads = store?.getQuads ? store.getQuads(subjectIri, predicateIri, null, null) : [];
+    const literalQuad = quads.find((quad) => quad?.object?.termType === 'Literal');
+    if (literalQuad?.object?.value) {
+      return String(literalQuad.object.value);
+    }
+  }
+  return '';
+}
+
+/**
+ * Extracts annotation rows from an RDF/JS store without depending on rendered table cells.
+ *
+ * @param {RdfJsStore} store
+ * @returns {NlpQaOntologyRow[]}
+ */
+export function extractNlpQaOntologyRowsFromRdfStore(store) {
+  const subjectIris = new Set();
+  const quads = store?.getQuads ? store.getQuads(null, null, null, null) : [];
+  const annotationPredicates = new Set(Object.values(FIELD_PREDICATES).flat());
+
+  for (const quad of quads) {
+    if (
+      quad?.subject?.termType === 'NamedNode' &&
+      quad?.predicate?.termType === 'NamedNode' &&
+      annotationPredicates.has(String(quad.predicate.value))
+    ) {
+      subjectIris.add(String(quad.subject.value));
+    }
+  }
+
+  return Array.from(subjectIris)
+    .sort((left, right) => left.localeCompare(right))
+    .map((iri) => ({
+      iri,
+      type: getFirstObjectValueForNlpQaPredicate(store, iri, RDF_TYPE_IRI),
+      label: getFirstLiteralValueForNlpQaPredicates(store, iri, FIELD_PREDICATES.label),
+      prefLabel: getFirstLiteralValueForNlpQaPredicates(store, iri, FIELD_PREDICATES.prefLabel),
+      definition: getFirstLiteralValueForNlpQaPredicates(store, iri, FIELD_PREDICATES.definition),
+      example: getFirstLiteralValueForNlpQaPredicates(store, iri, FIELD_PREDICATES.example),
+      scopeNote: getFirstLiteralValueForNlpQaPredicates(store, iri, FIELD_PREDICATES.scopeNote),
+      acronym: getFirstLiteralValueForNlpQaPredicates(store, iri, FIELD_PREDICATES.acronym),
+      modified: false
+    }));
+}
+
+/**
+ * Intersects global check modes with field-specific ontology norms.
+ *
+ * @param {string} fieldName
+ * @param {Partial<NlpQaCheckModes> | null | undefined} globalModes
+ * @returns {NlpQaCheckModes}
+ */
+export function getNlpQaCheckModesForOntologyField(fieldName, globalModes) {
+  const normalizedGlobalModes = normalizeNlpQaCheckModes(globalModes, DEFAULT_NLP_QA_ONTOLOGY_CHECK_MODES);
+  const fieldNorms = NLP_QA_FIELD_CHECK_MODE_NORMS[/** @type {keyof typeof NLP_QA_FIELD_CHECK_MODE_NORMS} */ (fieldName)] ||
+    { spelling: false, grammar: false, aristotelian: false };
+  return {
+    spelling: normalizedGlobalModes.spelling && fieldNorms.spelling,
+    grammar: normalizedGlobalModes.grammar && fieldNorms.grammar,
+    aristotelian: normalizedGlobalModes.aristotelian && fieldNorms.aristotelian
+  };
+}
+
+/**
+ * Returns the first object value for a predicate.
+ *
+ * @param {RdfJsStore} store
+ * @param {string} subjectIri
+ * @param {string} predicateIri
+ * @returns {string}
+ */
+export function getFirstObjectValueForNlpQaPredicate(store, subjectIri, predicateIri) {
+  const quad = (store?.getQuads ? store.getQuads(subjectIri, predicateIri, null, null) : [])[0];
+  return quad?.object?.value ? String(quad.object.value) : '';
+}
+
+/**
+ * Builds an ontology-aware local lexicon from row text and acronyms.
+ *
+ * @param {NlpQaOntologyRow[]} rows
+ * @param {{ words?: Iterable<string>, allowlist?: Iterable<string> }} [options]
+ * @returns {Set<string>}
+ */
+export function buildNlpQaOntologyLexicon(rows, options = {}) {
+  /** @type {string[]} */
+  const ontologyWords = [];
+  for (const row of rows) {
+    for (const fieldName of ['label', 'prefLabel', 'acronym']) {
+      const value = String(row[/** @type {keyof NlpQaOntologyRow} */ (fieldName)] || '');
+      ontologyWords.push(...tokenizeTextIntoNlpQaTokens(value).map((token) => token.text));
+    }
+  }
+  return buildNlpQaLexicon({
+    words: options.words,
+    allowlist: options.allowlist,
+    ontologyWords
+  });
+}
+
+/**
+ * Checks all configured annotation fields for one row.
+ *
+ * @param {NlpQaOntologyRow} row
+ * @param {Set<string>} lexicon
+ * @param {{ fieldNames?: readonly string[], compromiseNlp?: ((text: string) => unknown) | null, checkModes?: Partial<NlpQaCheckModes> }} [options]
+ * @returns {NlpQaCheckedOntologyRow}
+ */
+export function checkNlpQaOntologyRow(row, lexicon, options = {}) {
+  const fieldNames = options.fieldNames || NLP_QA_CHECKED_FIELD_NAMES;
+  const issues = fieldNames.flatMap((fieldName) => {
+    const value = String(row[/** @type {keyof NlpQaOntologyRow} */ (fieldName)] || '');
+    if (!value.trim()) {
+      return [];
+    }
+    return checkTextFieldWithNlpQa(value, {
+      lexicon,
+      fieldName,
+      iri: row.iri,
+      compromiseNlp: options.compromiseNlp,
+      checkModes: getNlpQaCheckModesForOntologyField(fieldName, options.checkModes)
+    }).issues;
+  });
+
+  return {
+    row,
+    status: deriveNlpQaStatusFromIssues(issues),
+    issues
+  };
+}
+
+/**
+ * Checks a full ontology table state from memory.
+ *
+ * @param {NlpQaOntologyRow[]} rows
+ * @param {{ lexicon?: Set<string>, fieldNames?: readonly string[], words?: Iterable<string>, allowlist?: Iterable<string>, compromiseNlp?: ((text: string) => unknown) | null, checkModes?: Partial<NlpQaCheckModes> }} [options]
+ * @returns {{ status: NlpQaStatus, rows: NlpQaCheckedOntologyRow[], issues: NlpQaIssue[], lexicon: Set<string> }}
+ */
+export function checkNlpQaOntologyTable(rows, options = {}) {
+  const lexicon = options.lexicon || buildNlpQaOntologyLexicon(rows, options);
+  const checkedRows = rows.map((row) => checkNlpQaOntologyRow(row, lexicon, options));
+  const issues = checkedRows.flatMap((checkedRow) => checkedRow.issues);
+  return {
+    status: deriveNlpQaStatusFromIssues(issues),
+    rows: checkedRows,
+    issues,
+    lexicon
+  };
+}
+
+/**
+ * Returns the next immutable row array after editing a field in memory.
+ *
+ * @param {NlpQaOntologyRow[]} rows
+ * @param {string} iri
+ * @param {string} fieldName
+ * @param {string} newValue
+ * @returns {NlpQaOntologyRow[]}
+ */
+export function updateNlpQaOntologyRowsWithEditedField(rows, iri, fieldName, newValue) {
+  return rows.map((row) => {
+    if (row.iri !== iri || !NLP_QA_CHECKED_FIELD_NAMES.includes(fieldName)) {
+      return row;
+    }
+    return {
+      ...row,
+      [fieldName]: newValue,
+      modified: true
+    };
+  });
+}
+
+/**
+ * Filters checked rows for the current UI state.
+ *
+ * @param {NlpQaCheckedOntologyRow[]} checkedRows
+ * @param {'all' | 'spelling' | 'grammar' | 'clean' | 'modified'} filter
+ * @returns {NlpQaCheckedOntologyRow[]}
+ */
+export function filterNlpQaCheckedRowsForDisplay(checkedRows, filter) {
+  switch (filter) {
+    case 'spelling':
+      return checkedRows.filter((checkedRow) => checkedRow.issues.some((issue) => issue.category === 'spelling'));
+    case 'grammar':
+      return checkedRows.filter((checkedRow) => checkedRow.issues.some((issue) => issue.category === 'grammar'));
+    case 'clean':
+      return checkedRows.filter((checkedRow) => checkedRow.status === 'pass');
+    case 'modified':
+      return checkedRows.filter((checkedRow) => checkedRow.row.modified);
+    case 'all':
+    default:
+      return checkedRows;
+  }
+}
