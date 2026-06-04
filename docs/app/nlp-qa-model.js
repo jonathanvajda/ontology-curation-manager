@@ -81,6 +81,7 @@ export function createStableNlpQaIssueId(input) {
 export function normalizeTokenForNlpQaLexicon(token) {
   return String(token || '')
     .trim()
+    .replace(/\u2019/g, "'")
     .replace(/^['"`]+|['"`]+$/g, '')
     .toLowerCase();
 }
@@ -120,7 +121,7 @@ export function tokenizeTextIntoNlpQaTokens(text, options = {}) {
 
   /** @type {NlpQaToken[]} */
   const tokens = [];
-  const wordPattern = /[A-Za-z][A-Za-z0-9]*(?:[-'][A-Za-z0-9]+)*/g;
+  const wordPattern = /[A-Za-z][A-Za-z0-9]*(?:[-'\u2019][A-Za-z0-9]+)*/g;
   let match = wordPattern.exec(source);
   while (match) {
     tokens.push({
@@ -189,6 +190,13 @@ export function shouldSkipTokenForNlpQaSpelling(token) {
 export function getNlpQaSpellingLookupForms(token) {
   const normalized = normalizeTokenForNlpQaLexicon(token);
   const forms = new Set([normalized]);
+  if (normalized.endsWith("'s") && normalized.length > 3) {
+    forms.add(normalized.slice(0, -2));
+  }
+  if (normalized.endsWith("s'") && normalized.length > 3) {
+    forms.add(normalized.slice(0, -1));
+    forms.add(normalized.slice(0, -2));
+  }
   if (normalized.endsWith('ies') && normalized.length > 4) {
     forms.add(`${normalized.slice(0, -3)}y`);
   }

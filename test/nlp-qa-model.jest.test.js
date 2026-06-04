@@ -58,4 +58,26 @@ describe('nlp qa model', () => {
     expect(aristotelianEnabled.status).toBe('warning');
     expect(aristotelianEnabled.issues[0].code).toBe('ARISTOTELIAN_FORM_NOT_DETECTED');
   });
+
+  test('checkTextFieldWithNlpQa accepts possessive apostrophe forms from base words', async () => {
+    const {
+      buildNlpQaLexicon,
+      checkTextFieldWithNlpQa,
+      getNlpQaSpellingLookupForms
+    } = await import('../docs/app/nlp-qa-model.js');
+    const lexicon = buildNlpQaLexicon({ words: ['bearer', 'role'] });
+
+    const straightPossessive = checkTextFieldWithNlpQa("the bearer's role.", {
+      lexicon,
+      checkModes: { spelling: true, grammar: false, aristotelian: false }
+    });
+    const curlyPossessive = checkTextFieldWithNlpQa('the bearer\u2019s role.', {
+      lexicon,
+      checkModes: { spelling: true, grammar: false, aristotelian: false }
+    });
+
+    expect(getNlpQaSpellingLookupForms("bearer's")).toContain('bearer');
+    expect(straightPossessive.issues).toHaveLength(0);
+    expect(curlyPossessive.issues).toHaveLength(0);
+  });
 });
