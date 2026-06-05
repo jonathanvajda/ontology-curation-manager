@@ -518,6 +518,7 @@ Upstream source location in this repo:
 ```text
 src/lexicon-build/upstream/lexicon.ts
 ```
+Current version used: 14.15.1
 
 Generated browser asset:
 
