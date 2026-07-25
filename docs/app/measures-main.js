@@ -37,6 +37,8 @@ import { cssEscapeAttr, escapeHtml, getTimestampForFileName, safeFilePart } from
 /** @typedef {import('./types.js').PreparedOntologyFile} PreparedOntologyFile */
 /** @typedef {import('./types.js').SupplementalOntologyFile} SupplementalOntologyFile */
 
+const FormatRegistry = globalThis.FormatRegistry || {};
+
 /**
  * @typedef {Object} MeasuresAnalysis
  * @property {string} analysisKey
@@ -73,7 +75,9 @@ const measuresRoadmapModal = document.getElementById('measuresRoadmapContainer')
 /** @type {HTMLElement | null} */
 const importSnippetModal = document.getElementById('importSnippetModal');
 
-const SUPPLEMENTAL_IMPORT_ACCEPT_ATTR = '.ttl,.turtle,.rdf,.owl,.xml,.nt,.ntriples,.nq,.trig,.n3,.jsonld,.json-ld';
+const SUPPLEMENTAL_IMPORT_ACCEPT_ATTR = FormatRegistry.getAcceptExtensions
+  ? FormatRegistry.getAcceptExtensions('rdf')
+  : '.ttl,.turtle,.rdf,.owl,.xml,.nt,.ntriples,.nq,.trig,.n3,.jsonld,.json-ld';
 
 /** @type {PreparedOntologyFile[]} */
 let preparedOntologyFiles = [];

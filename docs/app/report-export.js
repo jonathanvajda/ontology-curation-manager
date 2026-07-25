@@ -25,6 +25,11 @@ import {
  * @returns {void}
  */
 export function downloadTextFile(text, fileName, mimeType) {
+  if (globalThis.FormatRegistry?.downloadTextFile) {
+    globalThis.FormatRegistry.downloadTextFile(fileName, text, { mimeType });
+    return;
+  }
+
   const blob = new Blob([text], { type: mimeType || 'text/plain' });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');

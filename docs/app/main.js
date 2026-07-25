@@ -58,6 +58,8 @@ import {
 /** @typedef {import('./types.js').PerResourceCurationRow} PerResourceCurationRow */
 /** @typedef {import('./types.js').QueryResultRow} QueryResultRow */
 /** @typedef {import('./types.js').ResourceDetail} ResourceDetail */
+
+const FormatRegistry = globalThis.FormatRegistry || {};
 /** @typedef {import('./types.js').SavedRun} SavedRun */
 /** @typedef {import('./types.js').StagedResourceEdit} StagedResourceEdit */
 /** @typedef {import('./types.js').SupplementalOntologyFile} SupplementalOntologyFile */
@@ -199,7 +201,9 @@ let queryProgressEntries = [];
 /** @type {boolean} */
 let preflightCollapsed = false;
 
-const SUPPLEMENTAL_IMPORT_ACCEPT_ATTR = '.ttl,.turtle,.rdf,.owl,.xml,.nt,.ntriples,.nq,.trig,.n3,.jsonld,.json-ld';
+const SUPPLEMENTAL_IMPORT_ACCEPT_ATTR = FormatRegistry.getAcceptExtensions
+  ? FormatRegistry.getAcceptExtensions('rdf')
+  : '.ttl,.turtle,.rdf,.owl,.xml,.nt,.ntriples,.nq,.trig,.n3,.jsonld,.json-ld';
 
 /**
  * Sets the status text.
@@ -1572,6 +1576,11 @@ async function rerunEditSessionInspection() {
  * @returns {string}
  */
 function getFileExtensionForFormat(format) {
+  const preferred = FormatRegistry.getPreferredExtensionForMimeType
+    ? FormatRegistry.getPreferredExtensionForMimeType(format)
+    : null;
+  if (preferred?.ok) return `.${preferred.value}`;
+
   switch (format) {
     case SUPPORTED_RDF_FORMATS.TURTLE:
       return '.ttl';

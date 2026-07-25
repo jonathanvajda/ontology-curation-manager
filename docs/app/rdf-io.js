@@ -172,6 +172,11 @@ function getRuntimeLibraries(overrides = {}) {
  * @returns {RdfFormat | null}
  */
 export function normalizeRdfFormat(input) {
+  const normalized = runtimeWindow.FormatRegistry?.normalizeSupportedMimeType?.(input);
+  if (normalized?.ok && normalized.value.category === 'rdf') {
+    return /** @type {RdfFormat} */ (normalized.value.mimeType);
+  }
+
   const value = String(input || '').trim().toLowerCase();
   if (!value) {
     return null;
@@ -225,6 +230,11 @@ export function normalizeRdfFormat(input) {
  * @returns {RdfFormat}
  */
 export function detectRdfFormat(fileName) {
+  const detected = runtimeWindow.FormatRegistry?.getSupportedMimeTypeForFilename?.(fileName);
+  if (detected?.ok && detected.value.category === 'rdf') {
+    return /** @type {RdfFormat} */ (detected.value.mimeType);
+  }
+
   const lower = String(fileName || '').toLowerCase();
 
   for (const [extension, format] of Object.entries(extensionToFormat)) {
@@ -243,6 +253,9 @@ export function detectRdfFormat(fileName) {
  * @returns {boolean}
  */
 export function isSupportedRdfFileName(fileName) {
+  const detected = runtimeWindow.FormatRegistry?.getSupportedMimeTypeForFilename?.(fileName);
+  if (detected?.ok) return detected.value.category === 'rdf';
+
   const lower = String(fileName || '').toLowerCase();
   if (!lower) {
     return true;
