@@ -5,6 +5,10 @@ import {
   createN3WriterOptionsWithPrefixes,
   applyPrefixesToRdflibStore
 } from './shared/namespace-registry/rdf-serialization-prefixes.js';
+import {
+  getSupportedMimeTypeForFilename,
+  normalizeSupportedMimeType
+} from './shared/format-registry/mime-registry.js';
 
 /**
  * Brand-neutral RDF parsing and serialization helpers.
@@ -177,7 +181,7 @@ function getRuntimeLibraries(overrides = {}) {
  * @returns {RdfFormat | null}
  */
 export function normalizeRdfFormat(input) {
-  const normalized = runtimeWindow.FormatRegistry?.normalizeSupportedMimeType?.(input);
+  const normalized = normalizeSupportedMimeType(input);
   if (normalized?.ok && normalized.value.category === 'rdf') {
     return /** @type {RdfFormat} */ (normalized.value.mimeType);
   }
@@ -235,7 +239,7 @@ export function normalizeRdfFormat(input) {
  * @returns {RdfFormat}
  */
 export function detectRdfFormat(fileName) {
-  const detected = runtimeWindow.FormatRegistry?.getSupportedMimeTypeForFilename?.(fileName);
+  const detected = getSupportedMimeTypeForFilename(fileName);
   if (detected?.ok && detected.value.category === 'rdf') {
     return /** @type {RdfFormat} */ (detected.value.mimeType);
   }
@@ -258,7 +262,7 @@ export function detectRdfFormat(fileName) {
  * @returns {boolean}
  */
 export function isSupportedRdfFileName(fileName) {
-  const detected = runtimeWindow.FormatRegistry?.getSupportedMimeTypeForFilename?.(fileName);
+  const detected = getSupportedMimeTypeForFilename(fileName);
   if (detected?.ok) return detected.value.category === 'rdf';
 
   const lower = String(fileName || '').toLowerCase();

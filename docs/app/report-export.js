@@ -8,6 +8,7 @@ import {
   getReportStandards,
   rowsToCsv
 } from './shared.js';
+import { downloadTextFile as downloadBrowserTextFile } from './shared/format-registry/browser-file-actions.js';
 
 /** @typedef {import('./types.js').EvaluatedReport} EvaluatedReport */
 /** @typedef {import('./types.js').ExportState} ExportState */
@@ -25,22 +26,7 @@ import {
  * @returns {void}
  */
 export function downloadTextFile(text, fileName, mimeType) {
-  if (globalThis.FormatRegistry?.downloadTextFile) {
-    globalThis.FormatRegistry.downloadTextFile(fileName, text, { mimeType });
-    return;
-  }
-
-  const blob = new Blob([text], { type: mimeType || 'text/plain' });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-
-  anchor.href = url;
-  anchor.download = fileName;
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-
-  URL.revokeObjectURL(url);
+  downloadBrowserTextFile(fileName, text, { mimeType });
 }
 
 /**

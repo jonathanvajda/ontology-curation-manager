@@ -26,6 +26,7 @@ import {
   buildMeasuresYaml
 } from './measures-export.js';
 import { downloadTextFile } from './report-export.js';
+import { getAcceptExtensions } from './shared/format-registry/browser-file-actions.js';
 import {
   renderImportSnippetModal,
   renderMeasuresResults,
@@ -36,8 +37,6 @@ import { cssEscapeAttr, escapeHtml, getTimestampForFileName, safeFilePart } from
 /** @typedef {import('./types.js').ExternalIriDependency} ExternalIriDependency */
 /** @typedef {import('./types.js').PreparedOntologyFile} PreparedOntologyFile */
 /** @typedef {import('./types.js').SupplementalOntologyFile} SupplementalOntologyFile */
-
-const FormatRegistry = globalThis.FormatRegistry || {};
 
 /**
  * @typedef {Object} MeasuresAnalysis
@@ -75,9 +74,7 @@ const measuresRoadmapModal = document.getElementById('measuresRoadmapContainer')
 /** @type {HTMLElement | null} */
 const importSnippetModal = document.getElementById('importSnippetModal');
 
-const SUPPLEMENTAL_IMPORT_ACCEPT_ATTR = FormatRegistry.getAcceptExtensions
-  ? FormatRegistry.getAcceptExtensions('rdf')
-  : '.ttl,.turtle,.rdf,.owl,.xml,.nt,.ntriples,.nq,.trig,.n3,.jsonld,.json-ld';
+const SUPPLEMENTAL_IMPORT_ACCEPT_ATTR = getAcceptExtensions('rdf');
 
 /** @type {PreparedOntologyFile[]} */
 let preparedOntologyFiles = [];

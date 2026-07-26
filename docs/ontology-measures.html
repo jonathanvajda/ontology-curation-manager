@@ -102,6 +102,9 @@
   <link rel="stylesheet" href="./styles/ontology-compliance-diagnostic.css" />
   <link rel="modulepreload" href="./app/shared/namespace-registry/prefix-map.js" />
   <link rel="modulepreload" href="./app/shared/namespace-registry/rdf-serialization-prefixes.js" />
+  <link rel="modulepreload" href="./app/shared/format-registry/mime-registry.js" />
+  <link rel="modulepreload" href="./app/shared/format-registry/rdf-parser-formats.js" />
+  <link rel="modulepreload" href="./app/shared/format-registry/browser-file-actions.js" />
 </head>
 
 <body data-page-id="ontology-measures">
@@ -230,7 +233,6 @@
       })();
     })();
   </script>
-  <script src="./app/shared/format-registry/browser-global.js"></script>
   <script type="module" src="./app/measures-main.js"></script>
 </body>
 </html>

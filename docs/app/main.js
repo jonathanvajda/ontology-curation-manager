@@ -46,6 +46,8 @@ import {
   buildStandardDetailCsv,
   downloadTextFile
 } from './report-export.js';
+import { getPreferredExtensionForMimeType } from './shared/format-registry/mime-registry.js';
+import { getAcceptExtensions } from './shared/format-registry/browser-file-actions.js';
 
 /** @typedef {import('./types.js').BatchRunPayload} BatchRunPayload */
 /** @typedef {import('./types.js').EvaluatedReport} EvaluatedReport */
@@ -59,7 +61,6 @@ import {
 /** @typedef {import('./types.js').QueryResultRow} QueryResultRow */
 /** @typedef {import('./types.js').ResourceDetail} ResourceDetail */
 
-const FormatRegistry = globalThis.FormatRegistry || {};
 /** @typedef {import('./types.js').SavedRun} SavedRun */
 /** @typedef {import('./types.js').StagedResourceEdit} StagedResourceEdit */
 /** @typedef {import('./types.js').SupplementalOntologyFile} SupplementalOntologyFile */
@@ -201,9 +202,7 @@ let queryProgressEntries = [];
 /** @type {boolean} */
 let preflightCollapsed = false;
 
-const SUPPLEMENTAL_IMPORT_ACCEPT_ATTR = FormatRegistry.getAcceptExtensions
-  ? FormatRegistry.getAcceptExtensions('rdf')
-  : '.ttl,.turtle,.rdf,.owl,.xml,.nt,.ntriples,.nq,.trig,.n3,.jsonld,.json-ld';
+const SUPPLEMENTAL_IMPORT_ACCEPT_ATTR = getAcceptExtensions('rdf');
 
 /**
  * Sets the status text.
@@ -1576,9 +1575,7 @@ async function rerunEditSessionInspection() {
  * @returns {string}
  */
 function getFileExtensionForFormat(format) {
-  const preferred = FormatRegistry.getPreferredExtensionForMimeType
-    ? FormatRegistry.getPreferredExtensionForMimeType(format)
-    : null;
+  const preferred = getPreferredExtensionForMimeType(format);
   if (preferred?.ok) return `.${preferred.value}`;
 
   switch (format) {
