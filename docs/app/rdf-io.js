@@ -1,5 +1,10 @@
 // app/rdf-io.js
 // @ts-check
+import { normalizePrefixMap } from './shared/namespace-registry/prefix-map.js';
+import {
+  createN3WriterOptionsWithPrefixes,
+  applyPrefixesToRdflibStore
+} from './shared/namespace-registry/rdf-serialization-prefixes.js';
 
 /**
  * Brand-neutral RDF parsing and serialization helpers.
@@ -392,11 +397,12 @@ function serializeWithN3(store, format, prefixes, baseIri, runtime) {
 
   return new Promise((resolve, reject) => {
     try {
-      const writer = new Writer({
+      const writerOptions = createN3WriterOptionsWithPrefixes({
         format,
         prefixes: prefixes || {},
         ...(baseIri ? { baseIRI: baseIri } : {})
       });
+      const writer = new Writer(writerOptions.value);
 
       const quads = store?.getQuads ? store.getQuads(null, null, null, null) : [];
       writer.addQuads(quads);
@@ -452,7 +458,7 @@ async function serializeWithJsonLd(store, prefixes, baseIri, runtime) {
  * @param {RuntimeLibraries} [runtime]
  * @returns {Promise<string>}
  */
-async function serializeWithRdfXml(store, baseIri, runtime) {
+async function serializeWithRdfXml(store, prefixes, baseIri, runtime) {
   const { $rdf } = getRuntimeLibraries(runtime);
   if (!$rdf || typeof $rdf.graph !== 'function') {
     throw new Error('rdflib not found on window.$rdf. Check that rdflib.min.js is loaded.');
@@ -471,8 +477,9 @@ async function serializeWithRdfXml(store, baseIri, runtime) {
   if (typeof $rdf.Serializer === 'function') {
     const serializer = $rdf.Serializer(graph);
     if (typeof serializer.suggestNamespaces === 'function') {
-      serializer.suggestNamespaces({});
+      serializer.suggestNamespaces(normalizePrefixMap(prefixes || {}).prefixes);
     }
+    applyPrefixesToRdflibStore(graph, prefixes || {});
     if (typeof serializer.setBase === 'function' && baseIri) {
       serializer.setBase(baseIri);
     }
@@ -596,7 +603,7 @@ function parseWithN3(text, format, baseIri, runtime) {
 
   return {
     store,
-    prefixes,
+    prefixes: normalizePrefixMap(prefixes).prefixes,
     sourceFormat: format,
     baseIri
   };
@@ -756,7 +763,7 @@ export async function serializeRdfStore(store, format, options = {}) {
     return serializeWithJsonLd(store, prefixes, baseIri, options.runtime);
   }
   if (normalizedFormat === RDF_FORMATS.RDF_XML) {
-    return serializeWithRdfXml(store, baseIri, options.runtime);
+    return serializeWithRdfXml(store, prefixes, baseIri, options.runtime);
   }
 
   return serializeWithN3(store, normalizedFormat, prefixes, baseIri, options.runtime);
