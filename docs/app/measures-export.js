@@ -2,6 +2,7 @@
 // @ts-check
 
 import { escapeHtml } from './shared.js';
+import { serializeDelimitedRecords } from './shared/tabular-io/index.js';
 
 /** @typedef {import('./types.js').ExternalIriDependency} ExternalIriDependency */
 /** @typedef {import('./measures-model.js').MeasureMetric} MeasureMetric */
@@ -145,19 +146,6 @@ function metricValueToString(value) {
 }
 
 /**
- * Escapes one CSV or TSV field.
- *
- * @param {string} value
- * @param {string} delimiter
- * @returns {string}
- */
-function delimitedEscape(value, delimiter) {
-  const needsWrap = value.includes('"') || value.includes('\n') || value.includes('\r') || value.includes(delimiter);
-  const escaped = value.replace(/"/g, '""');
-  return needsWrap ? `"${escaped}"` : escaped;
-}
-
-/**
  * Serializes measure rows to CSV or TSV.
  *
  * @param {MeasureMetric[] | null | undefined} metrics
@@ -165,21 +153,18 @@ function delimitedEscape(value, delimiter) {
  * @returns {string}
  */
 function buildDelimitedMetrics(metrics, delimiter) {
-  const rows = Array.isArray(metrics) ? metrics : [];
-  const header = ['metric', 'metric_value', 'metric_type', 'explanation'];
-  const lines = [header.join(delimiter)];
+  const records = (Array.isArray(metrics) ? metrics : []).map((metric) => ({
+    metric: metric?.metric || '',
+    metric_value: metricValueToString(metric?.metricValue),
+    metric_type: metric?.metricType || '',
+    explanation: metric?.explanation || ''
+  }));
 
-  for (const metric of rows) {
-    const fields = [
-      metric?.metric || '',
-      metricValueToString(metric?.metricValue),
-      metric?.metricType || '',
-      metric?.explanation || ''
-    ].map((value) => delimitedEscape(String(value), delimiter));
-    lines.push(fields.join(delimiter));
-  }
-
-  return lines.join('\n') + '\n';
+  return serializeDelimitedRecords(records, {
+    headers: ['metric', 'metric_value', 'metric_type', 'explanation'],
+    delimiter,
+    trailingNewline: true
+  });
 }
 
 /**
@@ -278,25 +263,7 @@ export function buildMeasuresHtml(title, metrics) {
  * @returns {string}
  */
 export function buildAllMeasuresCsv(analyses) {
-  const rows = Array.isArray(analyses) ? analyses : [];
-  const header = ['fileName', 'ontologyIri', 'metric', 'metric_value', 'metric_type', 'explanation'];
-  const lines = [header.join(',')];
-
-  for (const analysis of rows) {
-    for (const metric of Array.isArray(analysis?.metrics) ? analysis.metrics : []) {
-      const fields = [
-        analysis?.fileName || '',
-        analysis?.ontologyIri || '',
-        metric?.metric || '',
-        metricValueToString(metric?.metricValue),
-        metric?.metricType || '',
-        metric?.explanation || ''
-      ].map((value) => delimitedEscape(String(value), ','));
-      lines.push(fields.join(','));
-    }
-  }
-
-  return lines.join('\n') + '\n';
+  return buildDelimitedAllMeasures(analyses, ',');
 }
 
 /**
@@ -306,25 +273,37 @@ export function buildAllMeasuresCsv(analyses) {
  * @returns {string}
  */
 export function buildAllMeasuresTsv(analyses) {
-  const rows = Array.isArray(analyses) ? analyses : [];
-  const header = ['fileName', 'ontologyIri', 'metric', 'metric_value', 'metric_type', 'explanation'];
-  const lines = [header.join('\t')];
+  return buildDelimitedAllMeasures(analyses, '\t');
+}
 
-  for (const analysis of rows) {
+/**
+ * Serializes many ontology analyses to CSV or TSV.
+ *
+ * @param {ExportableMeasuresAnalysis[] | null | undefined} analyses
+ * @param {',' | '\t'} delimiter
+ * @returns {string}
+ */
+function buildDelimitedAllMeasures(analyses, delimiter) {
+  const records = [];
+
+  for (const analysis of Array.isArray(analyses) ? analyses : []) {
     for (const metric of Array.isArray(analysis?.metrics) ? analysis.metrics : []) {
-      const fields = [
-        analysis?.fileName || '',
-        analysis?.ontologyIri || '',
-        metric?.metric || '',
-        metricValueToString(metric?.metricValue),
-        metric?.metricType || '',
-        metric?.explanation || ''
-      ].map((value) => delimitedEscape(String(value), '\t'));
-      lines.push(fields.join('\t'));
+      records.push({
+        fileName: analysis?.fileName || '',
+        ontologyIri: analysis?.ontologyIri || '',
+        metric: metric?.metric || '',
+        metric_value: metricValueToString(metric?.metricValue),
+        metric_type: metric?.metricType || '',
+        explanation: metric?.explanation || ''
+      });
     }
   }
 
-  return lines.join('\n') + '\n';
+  return serializeDelimitedRecords(records, {
+    headers: ['fileName', 'ontologyIri', 'metric', 'metric_value', 'metric_type', 'explanation'],
+    delimiter,
+    trailingNewline: true
+  });
 }
 
 /**
