@@ -26,7 +26,8 @@ import {
   buildMeasuresYaml
 } from './measures-export.js';
 import { downloadTextFile } from './report-export.js';
-import { getAcceptExtensions } from './shared/format-registry/browser-file-actions.js';
+import { createAcceptAttribute } from './shared/browser-file-io/index.js';
+import { SUPPORTED_MIME_DESCRIPTORS } from './shared/format-registry/mime-registry.js';
 import {
   renderImportSnippetModal,
   renderMeasuresResults,
@@ -74,7 +75,9 @@ const measuresRoadmapModal = document.getElementById('measuresRoadmapContainer')
 /** @type {HTMLElement | null} */
 const importSnippetModal = document.getElementById('importSnippetModal');
 
-const SUPPLEMENTAL_IMPORT_ACCEPT_ATTR = getAcceptExtensions('rdf');
+const SUPPLEMENTAL_IMPORT_ACCEPT_ATTR = createAcceptAttribute(Object.values(SUPPORTED_MIME_DESCRIPTORS), {
+  category: 'rdf'
+});
 
 /** @type {PreparedOntologyFile[]} */
 let preparedOntologyFiles = [];

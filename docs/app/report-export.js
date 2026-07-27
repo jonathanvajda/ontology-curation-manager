@@ -8,7 +8,7 @@ import {
   getReportStandards,
   rowsToCsv
 } from './shared.js';
-import { downloadTextFile as downloadBrowserTextFile } from './shared/format-registry/browser-file-actions.js';
+import { downloadTextFile as downloadBrowserTextFile } from './shared/browser-file-io/index.js';
 
 /** @typedef {import('./types.js').EvaluatedReport} EvaluatedReport */
 /** @typedef {import('./types.js').ExportState} ExportState */

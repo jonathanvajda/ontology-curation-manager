@@ -46,8 +46,11 @@ import {
   buildStandardDetailCsv,
   downloadTextFile
 } from './report-export.js';
-import { getPreferredExtensionForMimeType } from './shared/format-registry/mime-registry.js';
-import { getAcceptExtensions } from './shared/format-registry/browser-file-actions.js';
+import {
+  SUPPORTED_MIME_DESCRIPTORS,
+  getPreferredExtensionForMimeType
+} from './shared/format-registry/mime-registry.js';
+import { createAcceptAttribute } from './shared/browser-file-io/index.js';
 
 /** @typedef {import('./types.js').BatchRunPayload} BatchRunPayload */
 /** @typedef {import('./types.js').EvaluatedReport} EvaluatedReport */
@@ -202,7 +205,9 @@ let queryProgressEntries = [];
 /** @type {boolean} */
 let preflightCollapsed = false;
 
-const SUPPLEMENTAL_IMPORT_ACCEPT_ATTR = getAcceptExtensions('rdf');
+const SUPPLEMENTAL_IMPORT_ACCEPT_ATTR = createAcceptAttribute(Object.values(SUPPORTED_MIME_DESCRIPTORS), {
+  category: 'rdf'
+});
 
 /**
  * Sets the status text.
