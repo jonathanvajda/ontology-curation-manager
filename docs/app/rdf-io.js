@@ -9,6 +9,10 @@ import {
   getSupportedMimeTypeForFilename,
   normalizeSupportedMimeType
 } from './shared/format-registry/mime-registry.js';
+import {
+  parseRdfTextWithAdapters,
+  serializeRdfDatasetWithAdapters
+} from './shared/rdf-io/index.js';
 
 /**
  * Brand-neutral RDF parsing and serialization helpers.
@@ -730,14 +734,17 @@ export async function parseRdfInput(text, fileName = 'ontology.ttl', options = {
     ? options.baseIri.trim()
     : null;
 
-  if (format === RDF_FORMATS.JSON_LD) {
-    return parseWithJsonLd(text, baseIri, options.runtime);
-  }
-  if (format === RDF_FORMATS.RDF_XML) {
-    return parseWithRdfXml(text, baseIri, options.runtime);
-  }
-
-  return parseWithN3(text, format, baseIri, options.runtime);
+  const parsed = await parseRdfTextWithAdapters(text, {
+    format,
+    baseIri,
+    runtime: options.runtime
+  });
+  return {
+    store: parsed.dataset,
+    prefixes: parsed.prefixes || {},
+    sourceFormat: format,
+    baseIri
+  };
 }
 
 /**
@@ -763,12 +770,11 @@ export async function serializeRdfStore(store, format, options = {}) {
     ? options.baseIri.trim()
     : null;
 
-  if (normalizedFormat === RDF_FORMATS.JSON_LD) {
-    return serializeWithJsonLd(store, prefixes, baseIri, options.runtime);
-  }
-  if (normalizedFormat === RDF_FORMATS.RDF_XML) {
-    return serializeWithRdfXml(store, prefixes, baseIri, options.runtime);
-  }
-
-  return serializeWithN3(store, normalizedFormat, prefixes, baseIri, options.runtime);
+  const serialized = await serializeRdfDatasetWithAdapters(store, {
+    format: normalizedFormat,
+    prefixes,
+    baseIri,
+    runtime: options.runtime
+  });
+  return serialized.text;
 }
