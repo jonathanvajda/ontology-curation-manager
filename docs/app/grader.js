@@ -13,6 +13,8 @@
 /** @typedef {import('./types.js').OntologyReport} OntologyReport */
 /** @typedef {import('./types.js').FailureIndex} FailureIndex */
 
+import { COMMON_NAMESPACE_IRIS } from './shared/namespace-registry/namespace-registry.js';
+
 /**
  * Internal accumulator shape for per-resource curation.
  *
@@ -35,13 +37,15 @@
  * @property {Set<string>} failingResources
  */
 
+const NS = COMMON_NAMESPACE_IRIS;
+
 export const CURATION_STATUS_IRIS = Object.freeze({
-  UNCURATED: 'http://purl.obolibrary.org/obo/IAO_0000124',
-  METADATA_INCOMPLETE: 'http://purl.obolibrary.org/obo/IAO_0000123',
-  METADATA_COMPLETE: 'http://purl.obolibrary.org/obo/IAO_0000120',
-  PENDING_FINAL_VETTING: 'http://purl.obolibrary.org/obo/IAO_0000125',
-  REQUIRES_DISCUSSION: 'http://purl.obolibrary.org/obo/IAO_0000428',
-  READY_FOR_RELEASE: 'http://purl.obolibrary.org/obo/IAO_0000122'
+  UNCURATED: NS.iao.uncurated,
+  METADATA_INCOMPLETE: NS.iao.metadataIncomplete,
+  METADATA_COMPLETE: NS.iao.metadataComplete,
+  PENDING_FINAL_VETTING: NS.iao.pendingFinalVetting,
+  REQUIRES_DISCUSSION: NS.iao.requiresDiscussion,
+  READY_FOR_RELEASE: NS.iao.readyForRelease
 });
 
 /** @type {Readonly<Record<string, string>>} */

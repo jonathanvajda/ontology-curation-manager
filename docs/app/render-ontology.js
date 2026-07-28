@@ -5,19 +5,8 @@ import { getCriterionDefinition } from './criteria.js';
 import { escapeHtml, getReportStandards } from './shared.js';
 
 import {
-  DCTERMS_ACCESS_RIGHTS_IRI,
-  DCTERMS_DESCRIPTION_IRI,
-  DCTERMS_LICENSE_IRI,
-  DCTERMS_TITLE_IRI,
-  OBO_IAO_0000231_IRI,
-  OBO_IAO_0000232_IRI,
-  OBO_IAO_0100001_IRI,
-  OWL_IMPORTS_IRI,
-  OWL_VERSION_INFO_IRI,
-  OWL_VERSION_IRI,
-  RDF_TYPE_IRI,
-  RDFS_COMMENT_IRI
-} from './engine.js';
+  COMMON_NAMESPACE_IRIS
+} from './shared/namespace-registry/namespace-registry.js';
 
 /** @typedef {import('./types.js').Manifest} Manifest */
 /** @typedef {import('./types.js').InspectionScope} InspectionScope */
@@ -29,16 +18,17 @@ import {
 
 /** @type {HTMLElement | null} */
 const ontologyReportContainer = document.getElementById('ontologyReportContainer');
+const NS = COMMON_NAMESPACE_IRIS;
 
 const ONTOLOGY_METADATA_PREDICATES = new Set([
-  RDF_TYPE_IRI,
-  DCTERMS_TITLE_IRI,
-  DCTERMS_DESCRIPTION_IRI,
-  OWL_VERSION_IRI,
-  OWL_VERSION_INFO_IRI,
-  DCTERMS_LICENSE_IRI,
-  DCTERMS_ACCESS_RIGHTS_IRI,
-  OWL_IMPORTS_IRI
+  NS.rdf.type,
+  NS.dcterms.title,
+  NS.dcterms.description,
+  NS.owl.versionIRI,
+  NS.owl.versionInfo,
+  NS.dcterms.license,
+  NS.dcterms.accessRights,
+  NS.owl.imports
 ]);
 
 /**
@@ -214,19 +204,19 @@ function renderOntologyAnnotations(ontologyIri, ontologyDetail) {
   html += '<div class="ocd-editor-grid">';
   html += '<label class="ocd-filter">';
   html += '<span class="ocd-label">Curator note</span>';
-  html += '<textarea class="ocd-input ocd-textarea" rows="2" data-ontology-note="' + escapeHtml(ontologyIri) + '" data-predicate-iri="' + escapeHtml(OBO_IAO_0000232_IRI) + '"></textarea>';
+  html += '<textarea class="ocd-input ocd-textarea" rows="2" data-ontology-note="' + escapeHtml(ontologyIri) + '" data-predicate-iri="' + escapeHtml(NS.iao.curatorNote) + '"></textarea>';
   html += '</label>';
   html += '<label class="ocd-filter">';
   html += '<span class="ocd-label">Has obsolescence reason</span>';
-  html += '<textarea class="ocd-input ocd-textarea" rows="2" data-ontology-note="' + escapeHtml(ontologyIri) + '" data-predicate-iri="' + escapeHtml(OBO_IAO_0000231_IRI) + '"></textarea>';
+  html += '<textarea class="ocd-input ocd-textarea" rows="2" data-ontology-note="' + escapeHtml(ontologyIri) + '" data-predicate-iri="' + escapeHtml(NS.iao.obsolescenceReason) + '"></textarea>';
   html += '</label>';
   html += '<label class="ocd-filter">';
   html += '<span class="ocd-label">Term replaced by</span>';
-  html += '<input class="ocd-input ocd-mono" type="text" data-ontology-note="' + escapeHtml(ontologyIri) + '" data-predicate-iri="' + escapeHtml(OBO_IAO_0100001_IRI) + '" placeholder="IRI" />';
+  html += '<input class="ocd-input ocd-mono" type="text" data-ontology-note="' + escapeHtml(ontologyIri) + '" data-predicate-iri="' + escapeHtml(NS.iao.termReplacedBy) + '" placeholder="IRI" />';
   html += '</label>';
   html += '<label class="ocd-filter">';
   html += '<span class="ocd-label">Comment</span>';
-  html += '<textarea class="ocd-input ocd-textarea" rows="2" data-ontology-note="' + escapeHtml(ontologyIri) + '" data-predicate-iri="' + escapeHtml(RDFS_COMMENT_IRI) + '"></textarea>';
+  html += '<textarea class="ocd-input ocd-textarea" rows="2" data-ontology-note="' + escapeHtml(ontologyIri) + '" data-predicate-iri="' + escapeHtml(NS.rdfs.comment) + '"></textarea>';
   html += '</label>';
   html += '<label class="ocd-filter">';
   html += '<span class="ocd-label">Arbitrary predicate IRI</span>';
@@ -249,7 +239,7 @@ function renderOntologyAnnotations(ontologyIri, ontologyDetail) {
   html += '</label>';
   html += '<label class="ocd-filter">';
   html += '<span class="ocd-label">Literal datatype IRI</span>';
-  html += '<input class="ocd-input ocd-mono" type="text" data-ontology-arbitrary-object-datatype="' + escapeHtml(ontologyIri) + '" placeholder="http://www.w3.org/2001/XMLSchema#string" />';
+  html += '<input class="ocd-input ocd-mono" type="text" data-ontology-arbitrary-object-datatype="' + escapeHtml(ontologyIri) + '" placeholder="' + escapeHtml(NS.xsd.string) + '" />';
   html += '</label>';
   html += '</div>';
   html += '<div class="ocd-actions" style="margin-top:12px;">';

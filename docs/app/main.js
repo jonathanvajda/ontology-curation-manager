@@ -7,9 +7,7 @@ import {
   buildPreflightSummaryFromStore,
   deriveDefaultIncludedNamespaces,
   extractResourceDetail,
-  OWL_DEPRECATED_IRI,
-  SUPPORTED_RDF_FORMATS,
-  XSD_BOOLEAN_IRI
+  SUPPORTED_RDF_FORMATS
 } from './engine.js';
 import { buildFailuresIndex } from './grader.js';
 import { inspectStore } from './report-model.js';
@@ -51,6 +49,7 @@ import {
   getPreferredExtensionForMimeType
 } from './shared/format-registry/mime-registry.js';
 import { createAcceptAttribute } from './shared/browser-file-io/index.js';
+import { COMMON_NAMESPACE_IRIS } from './shared/namespace-registry/namespace-registry.js';
 
 /** @typedef {import('./types.js').BatchRunPayload} BatchRunPayload */
 /** @typedef {import('./types.js').EvaluatedReport} EvaluatedReport */
@@ -68,6 +67,8 @@ import { createAcceptAttribute } from './shared/browser-file-io/index.js';
 /** @typedef {import('./types.js').StagedResourceEdit} StagedResourceEdit */
 /** @typedef {import('./types.js').SupplementalOntologyFile} SupplementalOntologyFile */
 /** @typedef {import('./types.js').UiStateSnapshot} UiStateSnapshot */
+
+const NS = COMMON_NAMESPACE_IRIS;
 
 /**
  * @typedef {Object} DownloadAction
@@ -1223,31 +1224,31 @@ function stageBulkEdit() {
 
   for (const resourceIri of selectedResources) {
     if (statusValue) {
-      stageReplacement(resourceIri, 'http://purl.obolibrary.org/obo/IAO_0000114', [{
+      stageReplacement(resourceIri, NS.iao.curationStatus, [{
         termType: 'NamedNode',
         value: statusValue
       }]);
     }
     if (curatorNote) {
-      stageReplacement(resourceIri, 'http://purl.obolibrary.org/obo/IAO_0000232', [{
+      stageReplacement(resourceIri, NS.iao.curatorNote, [{
         termType: 'Literal',
         value: curatorNote
       }]);
     }
     if (obsolescenceReason) {
-      stageReplacement(resourceIri, 'http://purl.obolibrary.org/obo/IAO_0000231', [{
+      stageReplacement(resourceIri, NS.iao.obsolescenceReason, [{
         termType: 'Literal',
         value: obsolescenceReason
       }]);
     }
     if (termReplacedBy) {
-      stageReplacement(resourceIri, 'http://purl.obolibrary.org/obo/IAO_0100001', [{
+      stageReplacement(resourceIri, NS.iao.termReplacedBy, [{
         termType: 'NamedNode',
         value: termReplacedBy
       }]);
     }
     if (commentValue) {
-      stageReplacement(resourceIri, 'http://www.w3.org/2000/01/rdf-schema#comment', [{
+      stageReplacement(resourceIri, NS.rdfs.comment, [{
         termType: 'Literal',
         value: commentValue
       }]);
@@ -1282,7 +1283,7 @@ function stageSuggestedStatusesForSelection() {
       continue;
     }
 
-    stageReplacement(resourceIri, 'http://purl.obolibrary.org/obo/IAO_0000114', [{
+    stageReplacement(resourceIri, NS.iao.curationStatus, [{
       termType: 'NamedNode',
       value: row.statusIri
     }]);
@@ -1346,7 +1347,7 @@ function stageResourcePanelEdits(resourceIri) {
 
   let stagedCount = 0;
   if (statusSelect instanceof HTMLSelectElement && statusSelect.value) {
-    stageReplacement(resourceIri, 'http://purl.obolibrary.org/obo/IAO_0000114', [{
+    stageReplacement(resourceIri, NS.iao.curationStatus, [{
       termType: 'NamedNode',
       value: statusSelect.value
     }]);
@@ -1361,8 +1362,8 @@ function stageResourcePanelEdits(resourceIri) {
     const predicateIri = input.getAttribute('data-predicate-iri') || '';
     const value = String(input.value || '').trim();
     const isDeprecationOnlyField =
-      predicateIri === 'http://purl.obolibrary.org/obo/IAO_0000231' ||
-      predicateIri === 'http://purl.obolibrary.org/obo/IAO_0100001';
+      predicateIri === NS.iao.obsolescenceReason ||
+      predicateIri === NS.iao.termReplacedBy;
 
     if (
       isDeprecationOnlyField &&
@@ -1376,17 +1377,17 @@ function stageResourcePanelEdits(resourceIri) {
     }
 
     stageReplacement(resourceIri, predicateIri, [{
-      termType: predicateIri === 'http://purl.obolibrary.org/obo/IAO_0100001' ? 'NamedNode' : 'Literal',
+      termType: predicateIri === NS.iao.termReplacedBy ? 'NamedNode' : 'Literal',
       value
     }]);
     stagedCount += 1;
   }
 
   if (deprecateToggle instanceof HTMLInputElement && deprecateToggle.checked) {
-    stageReplacement(resourceIri, OWL_DEPRECATED_IRI, [{
+    stageReplacement(resourceIri, NS.owl.deprecated, [{
       termType: 'Literal',
       value: 'true',
-      datatypeIri: XSD_BOOLEAN_IRI
+      datatypeIri: NS.xsd.boolean
     }]);
     stagedCount += 1;
   }
@@ -1444,7 +1445,7 @@ function stageOntologyEdits(ontologyIri) {
     }
 
     stageReplacement(ontologyIri, predicateIri, [{
-      termType: predicateIri === 'http://purl.obolibrary.org/obo/IAO_0100001' ? 'NamedNode' : 'Literal',
+      termType: predicateIri === NS.iao.termReplacedBy ? 'NamedNode' : 'Literal',
       value
     }]);
     stagedCount += 1;

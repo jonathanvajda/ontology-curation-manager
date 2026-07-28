@@ -3,17 +3,12 @@
 
 import { CURATION_STATUS_IRIS } from './grader.js';
 import {
-  OBO_IAO_0000231_IRI,
-  OBO_IAO_0000232_IRI,
-  OBO_IAO_0100001_IRI,
-  RDFS_COMMENT_IRI
+  parseOntologyInput,
+  serializeOntologyStore
 } from './engine.js';
-import {
-  parseRdfInput,
-  serializeRdfStore
-} from './rdf-io.js';
+import { COMMON_NAMESPACE_IRIS } from './shared/namespace-registry/namespace-registry.js';
 
-/** @typedef {import('./rdf-io.js').RdfFormat} RdfFormat */
+/** @typedef {'text/turtle' | 'application/n-triples' | 'application/n-quads' | 'application/trig' | 'text/n3' | 'application/ld+json' | 'application/rdf+xml'} RdfFormat */
 /** @typedef {import('./types.js').EditableObjectValue} EditableObjectValue */
 /** @typedef {import('./types.js').ParsedOntologyState} ParsedOntologyState */
 /** @typedef {import('./types.js').StagedResourceEdit} StagedResourceEdit */
@@ -21,11 +16,13 @@ import {
 /** @typedef {{ Store?: any, DataFactory?: any }} N3Runtime */
 /** @typedef {Window & typeof globalThis & { N3?: N3Runtime }} RuntimeWithN3 */
 
+const NS = COMMON_NAMESPACE_IRIS;
+
 export const EDITABLE_NOTE_PREDICATES = Object.freeze([
-  OBO_IAO_0000232_IRI,
-  OBO_IAO_0000231_IRI,
-  OBO_IAO_0100001_IRI,
-  RDFS_COMMENT_IRI
+  NS.iao.curatorNote,
+  NS.iao.obsolescenceReason,
+  NS.iao.termReplacedBy,
+  NS.rdfs.comment
 ]);
 
 export const KNOWN_CURATION_STATUS_OPTIONS = Object.freeze([
@@ -45,7 +42,7 @@ export const KNOWN_CURATION_STATUS_OPTIONS = Object.freeze([
  * @returns {Promise<ParsedOntologyState>}
  */
 export async function createParsedOntologyState(text, fileName) {
-  const parsed = await parseRdfInput(text, fileName);
+  const parsed = await parseOntologyInput(text, fileName);
   return {
     ...parsed,
     fileName,
@@ -308,7 +305,7 @@ export function applyStagedEditsToStore(store, stagedEdits) {
  */
 export async function exportPrimaryOntology(primaryOntology, format) {
   const targetFormat = format || primaryOntology?.sourceFormat;
-  return serializeRdfStore(primaryOntology.store, targetFormat, {
+  return serializeOntologyStore(primaryOntology.store, targetFormat, {
     prefixes: primaryOntology?.prefixes || {},
     baseIri: primaryOntology?.baseIri || null
   });

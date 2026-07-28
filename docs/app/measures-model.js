@@ -3,26 +3,15 @@
 
 import {
   getNamespaceFromIri,
-  guessOntologyIri,
-  OWL_ANNOTATION_PROPERTY_IRI,
-  OWL_CLASS_IRI,
-  OWL_DATATYPE_PROPERTY_IRI,
-  OWL_DEPRECATED_IRI,
-  OWL_INVERSE_OF_IRI,
-  OWL_NAMED_INDIVIDUAL_IRI,
-  OWL_OBJECT_PROPERTY_IRI,
-  OWL_ONTOLOGY_IRI,
-  OWL_VERSION_IRI,
-  OWL_IMPORTS_IRI,
-  RDF_TYPE_IRI,
-  RDFS_DOMAIN_IRI,
-  RDFS_RANGE_IRI,
-  RDFS_SUBCLASS_OF_IRI,
-  RDFS_SUBPROPERTY_OF_IRI
+  guessOntologyIri
 } from './engine.js';
+import {
+  COMMON_NAMESPACE_IRIS,
+  namespacePrefixMapFromRegistry
+} from './shared/namespace-registry/namespace-registry.js';
 
-/** @typedef {import('./rdf-io.js').RdfJsQuad} RdfJsQuad */
-/** @typedef {import('./rdf-io.js').RdfJsStore} RdfJsStore */
+/** @typedef {any} RdfJsQuad */
+/** @typedef {any} RdfJsStore */
 
 /**
  * @typedef {'single_value' | 'list_value' | 'map_value'} MeasureMetricType
@@ -36,31 +25,26 @@ import {
  * @property {string} explanation
  */
 
-const XSD_NAMESPACE = 'http://www.w3.org/2001/XMLSchema#';
-const XSD_BOOLEAN_IRI = `${XSD_NAMESPACE}boolean`;
-const OWL_EQUIVALENT_CLASS_IRI = 'http://www.w3.org/2002/07/owl#equivalentClass';
-const OWL_DISJOINT_WITH_IRI = 'http://www.w3.org/2002/07/owl#disjointWith';
-const OWL_INTERSECTION_OF_IRI = 'http://www.w3.org/2002/07/owl#intersectionOf';
-const OWL_UNION_OF_IRI = 'http://www.w3.org/2002/07/owl#unionOf';
-const OWL_COMPLEMENT_OF_IRI = 'http://www.w3.org/2002/07/owl#complementOf';
-const OWL_SOME_VALUES_FROM_IRI = 'http://www.w3.org/2002/07/owl#someValuesFrom';
-const OWL_ALL_VALUES_FROM_IRI = 'http://www.w3.org/2002/07/owl#allValuesFrom';
-const OWL_HAS_VALUE_IRI = 'http://www.w3.org/2002/07/owl#hasValue';
-const OWL_MIN_CARDINALITY_IRI = 'http://www.w3.org/2002/07/owl#minCardinality';
-const OWL_MAX_CARDINALITY_IRI = 'http://www.w3.org/2002/07/owl#maxCardinality';
-const OWL_CARDINALITY_IRI = 'http://www.w3.org/2002/07/owl#cardinality';
-const SWRL_IMP_IRI = 'http://www.w3.org/2003/11/swrl#Imp';
+const NS = COMMON_NAMESPACE_IRIS;
+const STANDARD_PREFIXES = namespacePrefixMapFromRegistry();
+const BUILT_IN_SIGNATURE_NAMESPACES = Object.freeze([
+  STANDARD_PREFIXES.rdf,
+  STANDARD_PREFIXES.rdfs,
+  STANDARD_PREFIXES.xsd,
+  STANDARD_PREFIXES.owl,
+  STANDARD_PREFIXES.skos
+]);
 
 /** @type {ReadonlySet<string>} */
 const DECLARATION_TYPES = Object.freeze(new Set([
-  OWL_CLASS_IRI,
-  OWL_OBJECT_PROPERTY_IRI,
-  OWL_DATATYPE_PROPERTY_IRI,
-  OWL_ANNOTATION_PROPERTY_IRI,
-  OWL_NAMED_INDIVIDUAL_IRI,
-  OWL_ONTOLOGY_IRI,
-  'http://www.w3.org/2000/01/rdf-schema#Datatype',
-  'http://www.w3.org/2002/07/owl#Datatype'
+  NS.owl.Class,
+  NS.owl.ObjectProperty,
+  NS.owl.DatatypeProperty,
+  NS.owl.AnnotationProperty,
+  NS.owl.NamedIndividual,
+  NS.owl.Ontology,
+  NS.rdfs.Datatype,
+  NS.owl.Datatype
 ]));
 
 /**
@@ -97,13 +81,7 @@ export function getSyntaxLabel(sourceFormat) {
  * @returns {boolean}
  */
 function isBuiltInIri(iri) {
-  return (
-    iri.startsWith('http://www.w3.org/1999/02/22-rdf-syntax-ns#') ||
-    iri.startsWith('http://www.w3.org/2000/01/rdf-schema#') ||
-    iri.startsWith('http://www.w3.org/2001/XMLSchema#') ||
-    iri.startsWith('http://www.w3.org/2002/07/owl#') ||
-    iri.startsWith('http://www.w3.org/2004/02/skos/core#')
-  );
+  return BUILT_IN_SIGNATURE_NAMESPACES.some((namespaceIri) => iri.startsWith(namespaceIri));
 }
 
 /**
@@ -139,7 +117,7 @@ function collectSignatureEntities(store) {
  */
 function collectDeclaredEntities(store) {
   const declared = new Set();
-  const quads = store?.getQuads ? store.getQuads(null, RDF_TYPE_IRI, null, null) : [];
+  const quads = store?.getQuads ? store.getQuads(null, NS.rdf.type, null, null) : [];
 
   for (const quad of quads) {
     const objectIri = String(quad?.object?.value || '');
@@ -192,7 +170,7 @@ function deriveExpressivityLabel(constructSet, quads) {
       .map((quad) => String(quad.predicate.value))
   );
 
-  if (predicateSet.has(RDFS_SUBPROPERTY_OF_IRI) || predicateSet.has(OWL_INVERSE_OF_IRI)) {
+  if (predicateSet.has(NS.rdfs.subPropertyOf) || predicateSet.has(NS.owl.inverseOf)) {
     label += 'H';
   }
   for (const construct of ['U', 'C', 'E', 'A', 'H', 'N']) {
@@ -277,7 +255,7 @@ function isAboxQuad(quad, classSet, individualSet) {
   const predicateIri = String(quad?.predicate?.value || '');
   const objectIri = quad?.object?.termType === 'NamedNode' ? String(quad.object.value || '') : '';
 
-  if (predicateIri === RDF_TYPE_IRI && classSet.has(objectIri) && !classSet.has(subjectIri)) {
+  if (predicateIri === NS.rdf.type && classSet.has(objectIri) && !classSet.has(subjectIri)) {
     return true;
   }
 
@@ -306,9 +284,9 @@ function isRboxQuad(quad, objectPropertySet, datatypePropertySet, annotationProp
   }
 
   return (
-    predicateIri === RDFS_DOMAIN_IRI ||
-    predicateIri === RDFS_RANGE_IRI ||
-    predicateIri === OWL_INVERSE_OF_IRI
+    predicateIri === NS.rdfs.domain ||
+    predicateIri === NS.rdfs.range ||
+    predicateIri === NS.owl.inverseOf
   );
 }
 
@@ -325,27 +303,27 @@ export function computeBasicMeasures(store, options = {}) {
   const syntax = getSyntaxLabel(options.sourceFormat || null);
 
   const classSet = new Set(
-    (store?.getQuads ? store.getQuads(null, RDF_TYPE_IRI, OWL_CLASS_IRI, null) : [])
+    (store?.getQuads ? store.getQuads(null, NS.rdf.type, NS.owl.Class, null) : [])
       .filter((quad) => quad?.subject?.termType === 'NamedNode' && quad.subject.value)
       .map((quad) => String(quad.subject.value))
   );
   const objectPropertySet = new Set(
-    (store?.getQuads ? store.getQuads(null, RDF_TYPE_IRI, OWL_OBJECT_PROPERTY_IRI, null) : [])
+    (store?.getQuads ? store.getQuads(null, NS.rdf.type, NS.owl.ObjectProperty, null) : [])
       .filter((quad) => quad?.subject?.termType === 'NamedNode' && quad.subject.value)
       .map((quad) => String(quad.subject.value))
   );
   const datatypePropertySet = new Set(
-    (store?.getQuads ? store.getQuads(null, RDF_TYPE_IRI, OWL_DATATYPE_PROPERTY_IRI, null) : [])
+    (store?.getQuads ? store.getQuads(null, NS.rdf.type, NS.owl.DatatypeProperty, null) : [])
       .filter((quad) => quad?.subject?.termType === 'NamedNode' && quad.subject.value)
       .map((quad) => String(quad.subject.value))
   );
   const annotationPropertySet = new Set(
-    (store?.getQuads ? store.getQuads(null, RDF_TYPE_IRI, OWL_ANNOTATION_PROPERTY_IRI, null) : [])
+    (store?.getQuads ? store.getQuads(null, NS.rdf.type, NS.owl.AnnotationProperty, null) : [])
       .filter((quad) => quad?.subject?.termType === 'NamedNode' && quad.subject.value)
       .map((quad) => String(quad.subject.value))
   );
   const individualSet = new Set(
-    (store?.getQuads ? store.getQuads(null, RDF_TYPE_IRI, OWL_NAMED_INDIVIDUAL_IRI, null) : [])
+    (store?.getQuads ? store.getQuads(null, NS.rdf.type, NS.owl.NamedIndividual, null) : [])
       .filter((quad) => quad?.subject?.termType === 'NamedNode' && quad.subject.value)
       .map((quad) => String(quad.subject.value))
   );
@@ -354,7 +332,7 @@ export function computeBasicMeasures(store, options = {}) {
   const classToSuperclasses = new Map();
   /** @type {Map<string, Set<string>>} */
   const classToSubclasses = new Map();
-  for (const quad of store?.getQuads ? store.getQuads(null, RDFS_SUBCLASS_OF_IRI, null, null) : []) {
+  for (const quad of store?.getQuads ? store.getQuads(null, NS.rdfs.subClassOf, null, null) : []) {
     if (quad?.subject?.termType !== 'NamedNode' || quad?.object?.termType !== 'NamedNode') {
       continue;
     }
@@ -372,7 +350,7 @@ export function computeBasicMeasures(store, options = {}) {
 
   /** @type {Map<string, Set<string>>} */
   const classToInstances = new Map();
-  for (const quad of store?.getQuads ? store.getQuads(null, RDF_TYPE_IRI, null, null) : []) {
+  for (const quad of store?.getQuads ? store.getQuads(null, NS.rdf.type, null, null) : []) {
     if (quad?.subject?.termType !== 'NamedNode' || quad?.object?.termType !== 'NamedNode') {
       continue;
     }
@@ -390,13 +368,13 @@ export function computeBasicMeasures(store, options = {}) {
   const ontologyAnnotationCount = (store?.getQuads ? store.getQuads(ontologyIri, null, null, null) : [])
     .filter((quad) => {
       const predicateIri = String(quad?.predicate?.value || '');
-      return predicateIri !== RDF_TYPE_IRI &&
-        predicateIri !== OWL_IMPORTS_IRI &&
-        predicateIri !== OWL_VERSION_IRI;
+      return predicateIri !== NS.rdf.type &&
+        predicateIri !== NS.owl.imports &&
+        predicateIri !== NS.owl.versionIRI;
     })
     .length;
-  const directImportCount = store?.getQuads ? store.getQuads(ontologyIri, OWL_IMPORTS_IRI, null, null).length : 0;
-  const deprecatedTermCount = (store?.getQuads ? store.getQuads(null, OWL_DEPRECATED_IRI, null, null) : [])
+  const directImportCount = store?.getQuads ? store.getQuads(ontologyIri, NS.owl.imports, null, null).length : 0;
+  const deprecatedTermCount = (store?.getQuads ? store.getQuads(null, NS.owl.deprecated, null, null) : [])
     .filter((quad) => {
       if (quad?.subject?.termType !== 'NamedNode') {
         return false;
@@ -404,7 +382,7 @@ export function computeBasicMeasures(store, options = {}) {
       if (quad?.object?.termType === 'Literal') {
         const value = String(quad.object.value || '').toLowerCase();
         const datatypeIri = String(quad?.object?.datatype?.value || '');
-        return value === 'true' && (!datatypeIri || datatypeIri === XSD_BOOLEAN_IRI);
+        return value === 'true' && (!datatypeIri || datatypeIri === NS.xsd.boolean);
       }
       return String(quad?.object?.value || '').toLowerCase() === 'true';
     })
@@ -433,34 +411,34 @@ export function computeBasicMeasures(store, options = {}) {
       incrementMetricMap(classFrequency, String(quad.object.value || ''));
     }
     const predicateIri = String(quad?.predicate?.value || '');
-    if (predicateIri === OWL_INTERSECTION_OF_IRI) {
+    if (predicateIri === NS.owl.intersectionOf) {
       constructSet.add('AL');
     }
-    if (predicateIri === OWL_UNION_OF_IRI) {
+    if (predicateIri === NS.owl.unionOf) {
       constructSet.add('U');
     }
-    if (predicateIri === OWL_COMPLEMENT_OF_IRI) {
+    if (predicateIri === NS.owl.complementOf) {
       constructSet.add('C');
     }
-    if (predicateIri === OWL_SOME_VALUES_FROM_IRI) {
+    if (predicateIri === NS.owl.someValuesFrom) {
       constructSet.add('E');
     }
-    if (predicateIri === OWL_ALL_VALUES_FROM_IRI) {
+    if (predicateIri === NS.owl.allValuesFrom) {
       constructSet.add('A');
     }
-    if (predicateIri === OWL_HAS_VALUE_IRI) {
+    if (predicateIri === NS.owl.hasValue) {
       constructSet.add('H');
     }
     if (
-      predicateIri === OWL_MIN_CARDINALITY_IRI ||
-      predicateIri === OWL_MAX_CARDINALITY_IRI ||
-      predicateIri === OWL_CARDINALITY_IRI
+      predicateIri === NS.owl.minCardinality ||
+      predicateIri === NS.owl.maxCardinality ||
+      predicateIri === NS.owl.cardinality
     ) {
       constructSet.add('N');
     }
   }
-  const builtinDatatypes = Array.from(datatypeIris).filter((iri) => iri.startsWith(XSD_NAMESPACE));
-  const customDatatypes = Array.from(datatypeIris).filter((iri) => !iri.startsWith(XSD_NAMESPACE));
+  const builtinDatatypes = Array.from(datatypeIris).filter((iri) => iri.startsWith(STANDARD_PREFIXES.xsd));
+  const customDatatypes = Array.from(datatypeIris).filter((iri) => !iri.startsWith(STANDARD_PREFIXES.xsd));
 
   /** @type {Map<string, number>} */
   const namespaceEntityCounts = new Map();
@@ -509,7 +487,7 @@ export function computeBasicMeasures(store, options = {}) {
     annotationPropertySet
   )).length;
   const tboxAxiomCount = quads.length - aboxAxiomCount - rboxAxiomCount;
-  const ruleCount = (store?.getQuads ? store.getQuads(null, RDF_TYPE_IRI, SWRL_IMP_IRI, null) : [])
+  const ruleCount = (store?.getQuads ? store.getQuads(null, NS.rdf.type, NS.swrl.Imp, null) : [])
     .filter((quad) => quad?.subject?.termType === 'NamedNode' && quad.subject.value)
     .length;
 
@@ -520,12 +498,12 @@ export function computeBasicMeasures(store, options = {}) {
     const predicateIri = String(quad?.predicate?.value || '');
     const objectIri = quad?.object?.termType === 'NamedNode' ? String(quad.object.value || '') : '';
 
-    if (predicateIri === RDF_TYPE_IRI) {
+    if (predicateIri === NS.rdf.type) {
       if (DECLARATION_TYPES.has(objectIri)) {
         incrementMetricMap(axiomTypeCounts, 'Declaration');
       } else if (classSet.has(objectIri)) {
         incrementMetricMap(axiomTypeCounts, 'ClassAssertion');
-      } else if (objectIri === SWRL_IMP_IRI) {
+      } else if (objectIri === NS.swrl.Imp) {
         incrementMetricMap(axiomTypeCounts, 'Rule');
       } else if (subjectIri && objectIri) {
         incrementMetricMap(axiomTypeCounts, 'TypeAssertion');
@@ -533,27 +511,27 @@ export function computeBasicMeasures(store, options = {}) {
       continue;
     }
 
-    if (predicateIri === RDFS_SUBCLASS_OF_IRI) {
+    if (predicateIri === NS.rdfs.subClassOf) {
       incrementMetricMap(axiomTypeCounts, 'SubClassOf');
       continue;
     }
-    if (predicateIri === RDFS_SUBPROPERTY_OF_IRI) {
+    if (predicateIri === NS.rdfs.subPropertyOf) {
       incrementMetricMap(axiomTypeCounts, 'SubPropertyOf');
       continue;
     }
-    if (predicateIri === RDFS_DOMAIN_IRI) {
+    if (predicateIri === NS.rdfs.domain) {
       incrementMetricMap(axiomTypeCounts, 'Domain');
       continue;
     }
-    if (predicateIri === RDFS_RANGE_IRI) {
+    if (predicateIri === NS.rdfs.range) {
       incrementMetricMap(axiomTypeCounts, 'Range');
       continue;
     }
-    if (predicateIri === OWL_EQUIVALENT_CLASS_IRI) {
+    if (predicateIri === NS.owl.equivalentClass) {
       incrementMetricMap(axiomTypeCounts, 'EquivalentClasses');
       continue;
     }
-    if (predicateIri === OWL_DISJOINT_WITH_IRI) {
+    if (predicateIri === NS.owl.disjointWith) {
       incrementMetricMap(axiomTypeCounts, 'DisjointClasses');
       continue;
     }
@@ -586,10 +564,10 @@ export function computeBasicMeasures(store, options = {}) {
       .filter((quad) => quad?.predicate?.termType === 'NamedNode' && quad.predicate.value)
       .map((quad) => String(quad.predicate.value))
   );
-  const gciCount = (store?.getQuads ? store.getQuads(null, RDFS_SUBCLASS_OF_IRI, null, null) : [])
+  const gciCount = (store?.getQuads ? store.getQuads(null, NS.rdfs.subClassOf, null, null) : [])
     .filter((quad) => quad?.subject?.termType !== 'NamedNode')
     .length;
-  const gciHiddenCount = (store?.getQuads ? store.getQuads(null, OWL_EQUIVALENT_CLASS_IRI, null, null) : [])
+  const gciHiddenCount = (store?.getQuads ? store.getQuads(null, NS.owl.equivalentClass, null, null) : [])
     .filter((quad) =>
       quad?.subject?.termType === 'NamedNode' &&
       quad?.object?.termType !== 'NamedNode'
@@ -604,9 +582,9 @@ export function computeBasicMeasures(store, options = {}) {
   const hasRule = ruleCount > 0;
   const hasSubPropertyChains = (axiomTypeCounts.get('SubPropertyOf') || 0) > 0;
   const hasAnyOwlNamespaceIri = Array.from(signatureEntities)
-    .some((iri) => iri.startsWith('http://www.w3.org/2002/07/owl#'));
+    .some((iri) => iri.startsWith(STANDARD_PREFIXES.owl));
   const hasOntologyDeclaration = Boolean(
-    store?.getQuads && store.getQuads(null, RDF_TYPE_IRI, OWL_ONTOLOGY_IRI, null).length
+    store?.getQuads && store.getQuads(null, NS.rdf.type, NS.owl.Ontology, null).length
   );
   const hasOwlEntityDeclarations =
     classSet.size > 0 ||
@@ -615,20 +593,20 @@ export function computeBasicMeasures(store, options = {}) {
     annotationPropertySet.size > 0 ||
     individualSet.size > 0;
   const hasCharacteristicOwlPredicates = [
-    OWL_EQUIVALENT_CLASS_IRI,
-    OWL_DISJOINT_WITH_IRI,
-    OWL_INTERSECTION_OF_IRI,
-    OWL_UNION_OF_IRI,
-    OWL_COMPLEMENT_OF_IRI,
-    OWL_SOME_VALUES_FROM_IRI,
-    OWL_ALL_VALUES_FROM_IRI,
-    OWL_HAS_VALUE_IRI,
-    OWL_MIN_CARDINALITY_IRI,
-    OWL_MAX_CARDINALITY_IRI,
-    OWL_CARDINALITY_IRI,
-    OWL_INVERSE_OF_IRI,
-    OWL_IMPORTS_IRI,
-    OWL_VERSION_IRI
+    NS.owl.equivalentClass,
+    NS.owl.disjointWith,
+    NS.owl.intersectionOf,
+    NS.owl.unionOf,
+    NS.owl.complementOf,
+    NS.owl.someValuesFrom,
+    NS.owl.allValuesFrom,
+    NS.owl.hasValue,
+    NS.owl.minCardinality,
+    NS.owl.maxCardinality,
+    NS.owl.cardinality,
+    NS.owl.inverseOf,
+    NS.owl.imports,
+    NS.owl.versionIRI
   ].some((iri) => predicateSet.has(iri));
   const rdfButPossiblyNotOwl =
     !hasAnyOwlNamespaceIri ||
@@ -734,7 +712,7 @@ export function computeBasicMeasures(store, options = {}) {
     addProfileExclusion(profileExclusions, 'possible_owl2_dl_concern', ['annotation/logical property overlap']);
   }
   if (hasRule) {
-    const ruleSubjects = (store?.getQuads ? store.getQuads(null, RDF_TYPE_IRI, SWRL_IMP_IRI, null) : [])
+    const ruleSubjects = (store?.getQuads ? store.getQuads(null, NS.rdf.type, NS.swrl.Imp, null) : [])
       .filter((quad) => quad?.subject?.termType === 'NamedNode' && quad.subject.value)
       .map((quad) => String(quad.subject.value))
       .sort((left, right) => left.localeCompare(right));
@@ -955,7 +933,7 @@ export function computeBasicMeasures(store, options = {}) {
     {
       metric: 'datatypes_builtin',
       metricValue: builtinDatatypes
-        .map((iri) => iri.startsWith(XSD_NAMESPACE) ? iri.slice(XSD_NAMESPACE.length).toUpperCase() : iri)
+        .map((iri) => iri.startsWith(STANDARD_PREFIXES.xsd) ? iri.slice(STANDARD_PREFIXES.xsd.length).toUpperCase() : iri)
         .sort((left, right) => left.localeCompare(right)),
       metricType: 'list_value',
       explanation: 'Datatypes used from the built-in datatype map.'

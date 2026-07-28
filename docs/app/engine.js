@@ -23,11 +23,18 @@
 /** @typedef {import('./types.js').Severity} Severity */
 
 import {
-  detectRdfFormat,
-  parseRdfInput,
-  RDF_EXTENSIONS,
-  RDF_FORMATS
-} from './rdf-io.js';
+  SUPPORTED_MIME_DESCRIPTORS,
+  getSupportedMimeTypeForFilename,
+  normalizeSupportedMimeType
+} from './shared/format-registry/mime-registry.js';
+import {
+  parseRdfTextWithAdapters,
+  serializeRdfDatasetWithAdapters
+} from './shared/rdf-io/index.js';
+import {
+  COMMON_NAMESPACE_IRIS,
+  namespacePrefixMapFromRegistry
+} from './shared/namespace-registry/namespace-registry.js';
 import {
   getCurationStatusLabel,
   getCurationStatusRank
@@ -54,8 +61,8 @@ import {
  * @property {OntologyMetadata} ontologyMetadata
  */
 
-/** @type {Window & { Comunica?: any }} */
-const runtimeWindow = window;
+/** @type {(Window & typeof globalThis & { Comunica?: any, N3?: object, jsonld?: object, $rdf?: object }) | typeof globalThis} */
+const runtimeWindow = typeof window !== 'undefined' ? window : globalThis;
 
 /** @type {{ newEngine?: Function, QueryEngine?: any }} */
 const COMUNICA_GLOBAL = runtimeWindow.Comunica || {};
@@ -67,118 +74,80 @@ export const DEFAULT_MANIFEST_URL = './queries/manifest.json';
 export const DEFAULT_QUERY_BASE_PATH = 'queries/';
 export const DEFAULT_STANDARDS_MANIFEST_URL = './queries/standards-manifest.json';
 
-export const RDF_TYPE_IRI = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type';
-export const RDFS_LABEL_IRI = 'http://www.w3.org/2000/01/rdf-schema#label';
-export const OWL_ONTOLOGY_IRI = 'http://www.w3.org/2002/07/owl#Ontology';
-export const OWL_IMPORTS_IRI = 'http://www.w3.org/2002/07/owl#imports';
-export const OWL_VERSION_IRI = 'http://www.w3.org/2002/07/owl#versionIRI';
-export const OWL_VERSION_INFO_IRI = 'http://www.w3.org/2002/07/owl#versionInfo';
-export const OWL_DEPRECATED_IRI = 'http://www.w3.org/2002/07/owl#deprecated';
-export const DCTERMS_TITLE_IRI = 'http://purl.org/dc/terms/title';
-export const DCTERMS_DESCRIPTION_IRI = 'http://purl.org/dc/terms/description';
-export const DCTERMS_LICENSE_IRI = 'http://purl.org/dc/terms/license';
-export const DCTERMS_ACCESS_RIGHTS_IRI = 'http://purl.org/dc/terms/accessRights';
-export const DCTERMS_BIBLIOGRAPHIC_CITATION_IRI = 'http://purl.org/dc/terms/bibliographicCitation';
 export const UNKNOWN_ONTOLOGY_IRI = 'urn:ontology:unknown';
-export const OWL_NAMED_INDIVIDUAL_IRI = 'http://www.w3.org/2002/07/owl#NamedIndividual';
-export const OWL_CLASS_IRI = 'http://www.w3.org/2002/07/owl#Class';
-export const OWL_OBJECT_PROPERTY_IRI = 'http://www.w3.org/2002/07/owl#ObjectProperty';
-export const OWL_DATATYPE_PROPERTY_IRI = 'http://www.w3.org/2002/07/owl#DatatypeProperty';
-export const OWL_ANNOTATION_PROPERTY_IRI = 'http://www.w3.org/2002/07/owl#AnnotationProperty';
-export const OWL_INVERSE_OF_IRI = 'http://www.w3.org/2002/07/owl#inverseOf';
-export const RDFS_COMMENT_IRI = 'http://www.w3.org/2000/01/rdf-schema#comment';
-export const RDFS_SUBCLASS_OF_IRI = 'http://www.w3.org/2000/01/rdf-schema#subClassOf';
-export const RDFS_SUBPROPERTY_OF_IRI = 'http://www.w3.org/2000/01/rdf-schema#subPropertyOf';
-export const RDFS_DOMAIN_IRI = 'http://www.w3.org/2000/01/rdf-schema#domain';
-export const RDFS_RANGE_IRI = 'http://www.w3.org/2000/01/rdf-schema#range';
-export const RDFS_IS_DEFINED_BY_IRI = 'http://www.w3.org/2000/01/rdf-schema#isDefinedBy';
-export const SKOS_DEFINITION_IRI = 'http://www.w3.org/2004/02/skos/core#definition';
-export const SKOS_PREF_LABEL_IRI = 'http://www.w3.org/2004/02/skos/core#prefLabel';
-export const SKOS_ALT_LABEL_IRI = 'http://www.w3.org/2004/02/skos/core#altLabel';
-export const SKOS_EXAMPLE_IRI = 'http://www.w3.org/2004/02/skos/core#example';
-export const SKOS_SCOPE_NOTE_IRI = 'http://www.w3.org/2004/02/skos/core#scopeNote';
-export const XSD_BOOLEAN_IRI = 'http://www.w3.org/2001/XMLSchema#boolean';
-export const OBO_IAO_0000115_IRI = 'http://purl.obolibrary.org/obo/IAO_0000115';
-export const OBO_IAO_0000118_IRI = 'http://purl.obolibrary.org/obo/IAO_0000118';
-export const OBO_IAO_0000112_IRI = 'http://purl.obolibrary.org/obo/IAO_0000112';
-export const OBO_IAO_0000119_IRI = 'http://purl.obolibrary.org/obo/IAO_0000119';
-export const OBO_IAO_0000114_IRI = 'http://purl.obolibrary.org/obo/IAO_0000114';
-export const OBO_IAO_0000231_IRI = 'http://purl.obolibrary.org/obo/IAO_0000231';
-export const OBO_IAO_0000232_IRI = 'http://purl.obolibrary.org/obo/IAO_0000232';
-export const OBO_IAO_0100001_IRI = 'http://purl.obolibrary.org/obo/IAO_0100001';
-export const CCO_ACRONYM_IRI = 'http://www.ontologyrepository.com/CommonCoreOntologies/ont00001753';
-export const CCO_CURATED_IN_ONTOLOGY_IRI = 'http://www.ontologyrepository.com/CommonCoreOntologies/ont00001760';
 
 const CCEO_CURATED_IN_ONTOLOGY_LOCAL_NAME = 'is_curated_in_ontology';
+const NS = COMMON_NAMESPACE_IRIS;
+const STANDARD_PREFIXES = namespacePrefixMapFromRegistry();
 
 /** @type {ReadonlyArray<{ namespace: string, curatedIn: string }>} */
 const KNOWN_VOCABULARY_CURATED_IN_FALLBACKS = Object.freeze([
   {
-    namespace: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
-    curatedIn: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
+    namespace: STANDARD_PREFIXES.rdf,
+    curatedIn: STANDARD_PREFIXES.rdf
   },
   {
-    namespace: 'http://www.w3.org/2000/01/rdf-schema#',
-    curatedIn: 'http://www.w3.org/2000/01/rdf-schema#'
+    namespace: STANDARD_PREFIXES.rdfs,
+    curatedIn: STANDARD_PREFIXES.rdfs
   },
   {
-    namespace: 'http://www.w3.org/2002/07/owl#',
-    curatedIn: 'http://www.w3.org/2002/07/owl#'
+    namespace: STANDARD_PREFIXES.owl,
+    curatedIn: STANDARD_PREFIXES.owl
   },
   {
-    namespace: 'http://www.w3.org/2004/02/skos/core#',
-    curatedIn: 'http://www.w3.org/2004/02/skos/core#'
+    namespace: STANDARD_PREFIXES.skos,
+    curatedIn: STANDARD_PREFIXES.skos
   },
   {
-    namespace: 'http://purl.org/dc/elements/1.1/',
-    curatedIn: 'http://purl.org/dc/elements/1.1/'
+    namespace: STANDARD_PREFIXES.dc,
+    curatedIn: STANDARD_PREFIXES.dc
   },
   {
-    namespace: 'http://purl.org/dc/terms/',
-    curatedIn: 'http://purl.org/dc/terms/'
+    namespace: STANDARD_PREFIXES.dcterms,
+    curatedIn: STANDARD_PREFIXES.dcterms
   }
 ]);
 
 /** @type {ReadonlySet<string>} */
 const BUILT_IN_DEPENDENCY_IRI_EXCLUSIONS = Object.freeze(new Set([
-  'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil'
+  NS.rdf.nil
 ]));
 
 /** @type {ReadonlyArray<{ id: string, predicateIri: string, label: string }>} */
 const RESOURCE_DETAIL_PREDICATES = Object.freeze([
-  { id: 'rdfType', predicateIri: RDF_TYPE_IRI, label: 'RDF type' },
-  { id: 'label', predicateIri: RDFS_LABEL_IRI, label: 'Label' },
-  { id: 'definitionSkos', predicateIri: SKOS_DEFINITION_IRI, label: 'Definition' },
-  { id: 'definitionIao', predicateIri: OBO_IAO_0000115_IRI, label: 'Definition (IAO:0000115)' },
-  { id: 'altLabelSkos', predicateIri: SKOS_ALT_LABEL_IRI, label: 'Alternative label' },
-  { id: 'altTermIao', predicateIri: OBO_IAO_0000118_IRI, label: 'Alternative term (IAO:0000118)' },
-  { id: 'acronym', predicateIri: CCO_ACRONYM_IRI, label: 'Acronym' },
-  { id: 'exampleSkos', predicateIri: SKOS_EXAMPLE_IRI, label: 'Example' },
-  { id: 'exampleIao', predicateIri: OBO_IAO_0000112_IRI, label: 'Example of usage (IAO:0000112)' },
-  { id: 'scopeNote', predicateIri: SKOS_SCOPE_NOTE_IRI, label: 'Scope note' },
-  { id: 'bibliographicCitation', predicateIri: DCTERMS_BIBLIOGRAPHIC_CITATION_IRI, label: 'Bibliographic citation' },
-  { id: 'definitionSource', predicateIri: OBO_IAO_0000119_IRI, label: 'Definition source (IAO:0000119)' },
-  { id: 'isDefinedBy', predicateIri: RDFS_IS_DEFINED_BY_IRI, label: 'Is defined by' },
-  { id: 'curatedInOntology', predicateIri: CCO_CURATED_IN_ONTOLOGY_IRI, label: 'Is curated in ontology' },
-  { id: 'curationStatus', predicateIri: OBO_IAO_0000114_IRI, label: 'Has curation status' },
-  { id: 'obsolescenceReason', predicateIri: OBO_IAO_0000231_IRI, label: 'Has obsolescence reason' },
-  { id: 'curatorNote', predicateIri: OBO_IAO_0000232_IRI, label: 'Curator note' },
-  { id: 'termReplacedBy', predicateIri: OBO_IAO_0100001_IRI, label: 'Term replaced by' },
-  { id: 'subClassOf', predicateIri: RDFS_SUBCLASS_OF_IRI, label: 'SubClassOf' },
-  { id: 'subPropertyOf', predicateIri: RDFS_SUBPROPERTY_OF_IRI, label: 'SubPropertyOf' },
-  { id: 'inverseOf', predicateIri: OWL_INVERSE_OF_IRI, label: 'Inverse property' },
-  { id: 'domain', predicateIri: RDFS_DOMAIN_IRI, label: 'Domain' },
-  { id: 'range', predicateIri: RDFS_RANGE_IRI, label: 'Range' },
-  { id: 'comment', predicateIri: RDFS_COMMENT_IRI, label: 'Comment' }
+  { id: 'rdfType', predicateIri: NS.rdf.type, label: 'RDF type' },
+  { id: 'label', predicateIri: NS.rdfs.label, label: 'Label' },
+  { id: 'definitionSkos', predicateIri: NS.skos.definition, label: 'Definition' },
+  { id: 'definitionIao', predicateIri: NS.iao.definition, label: 'Definition (IAO:0000115)' },
+  { id: 'altLabelSkos', predicateIri: NS.skos.altLabel, label: 'Alternative label' },
+  { id: 'altTermIao', predicateIri: NS.iao.alternativeTerm, label: 'Alternative term (IAO:0000118)' },
+  { id: 'acronym', predicateIri: NS.cco.acronym, label: 'Acronym' },
+  { id: 'exampleSkos', predicateIri: NS.skos.example, label: 'Example' },
+  { id: 'exampleIao', predicateIri: NS.iao.exampleOfUsage, label: 'Example of usage (IAO:0000112)' },
+  { id: 'scopeNote', predicateIri: NS.skos.scopeNote, label: 'Scope note' },
+  { id: 'bibliographicCitation', predicateIri: NS.dcterms.bibliographicCitation, label: 'Bibliographic citation' },
+  { id: 'definitionSource', predicateIri: NS.iao.definitionSource, label: 'Definition source (IAO:0000119)' },
+  { id: 'isDefinedBy', predicateIri: NS.rdfs.isDefinedBy, label: 'Is defined by' },
+  { id: 'curatedInOntology', predicateIri: NS.cco.curatedIn, label: 'Is curated in ontology' },
+  { id: 'curationStatus', predicateIri: NS.iao.curationStatus, label: 'Has curation status' },
+  { id: 'obsolescenceReason', predicateIri: NS.iao.obsolescenceReason, label: 'Has obsolescence reason' },
+  { id: 'curatorNote', predicateIri: NS.iao.curatorNote, label: 'Curator note' },
+  { id: 'termReplacedBy', predicateIri: NS.iao.termReplacedBy, label: 'Term replaced by' },
+  { id: 'subClassOf', predicateIri: NS.rdfs.subClassOf, label: 'SubClassOf' },
+  { id: 'subPropertyOf', predicateIri: NS.rdfs.subPropertyOf, label: 'SubPropertyOf' },
+  { id: 'inverseOf', predicateIri: NS.owl.inverseOf, label: 'Inverse property' },
+  { id: 'domain', predicateIri: NS.rdfs.domain, label: 'Domain' },
+  { id: 'range', predicateIri: NS.rdfs.range, label: 'Range' },
+  { id: 'comment', predicateIri: NS.rdfs.comment, label: 'Comment' }
 ]);
 
 /** @type {Readonly<Record<string, string>>} */
 const KNOWN_IRI_LABELS = Object.freeze({
-  [OWL_CLASS_IRI]: 'owl:Class',
-  [OWL_NAMED_INDIVIDUAL_IRI]: 'owl:NamedIndividual',
-  [OWL_OBJECT_PROPERTY_IRI]: 'owl:ObjectProperty',
-  [OWL_DATATYPE_PROPERTY_IRI]: 'owl:DatatypeProperty',
-  [OWL_ANNOTATION_PROPERTY_IRI]: 'owl:AnnotationProperty'
+  [NS.owl.Class]: 'owl:Class',
+  [NS.owl.NamedIndividual]: 'owl:NamedIndividual',
+  [NS.owl.ObjectProperty]: 'owl:ObjectProperty',
+  [NS.owl.DatatypeProperty]: 'owl:DatatypeProperty',
+  [NS.owl.AnnotationProperty]: 'owl:AnnotationProperty'
 });
 
 /** @type {Readonly<Record<string, string>>} */
@@ -189,8 +158,29 @@ const RESOURCE_DETAIL_LABELS_BY_PREDICATE = Object.freeze(
   }, /** @type {Record<string, string>} */ ({}))
 );
 
-export const SUPPORTED_RDF_FORMATS = RDF_FORMATS;
-export const SUPPORTED_RDF_EXTENSIONS = RDF_EXTENSIONS;
+export const SUPPORTED_RDF_FORMATS = Object.freeze({
+  TURTLE: SUPPORTED_MIME_DESCRIPTORS.turtle.mimeType,
+  N_TRIPLES: SUPPORTED_MIME_DESCRIPTORS.nTriples.mimeType,
+  N_QUADS: SUPPORTED_MIME_DESCRIPTORS.nQuads.mimeType,
+  TRIG: SUPPORTED_MIME_DESCRIPTORS.trig.mimeType,
+  N3: SUPPORTED_MIME_DESCRIPTORS.n3.mimeType,
+  JSON_LD: SUPPORTED_MIME_DESCRIPTORS.jsonLd.mimeType,
+  RDF_XML: SUPPORTED_MIME_DESCRIPTORS.rdfXml.mimeType
+});
+
+export const SUPPORTED_RDF_EXTENSIONS = Object.freeze(
+  Object.values(SUPPORTED_MIME_DESCRIPTORS)
+    .filter((descriptor) => descriptor.category === 'rdf')
+    .flatMap((descriptor) => descriptor.extensions.map((extension) => `.${extension}`))
+);
+
+function getRdfRuntimeLibraries() {
+  return {
+    N3: runtimeWindow.N3,
+    jsonld: runtimeWindow.jsonld,
+    $rdf: runtimeWindow.$rdf
+  };
+}
 
 /**
  * Creates a Comunica engine using the browser bundle shape available at runtime.
@@ -232,7 +222,10 @@ export function getComunicaEngine() {
  * @returns {string}
  */
 export function guessRdfFormatFromFilename(fileName) {
-  return detectRdfFormat(fileName);
+  const detected = getSupportedMimeTypeForFilename(fileName);
+  return detected?.ok && detected.value.category === 'rdf'
+    ? detected.value.mimeType
+    : SUPPORTED_RDF_FORMATS.TURTLE;
 }
 
 /**
@@ -246,13 +239,74 @@ export function assertSupportedOntologyFile(fileName) {
     return;
   }
 
-  const lower = fileName.toLowerCase();
-  const isSupported = SUPPORTED_RDF_EXTENSIONS.some((extension) => lower.endsWith(extension));
-  if (!isSupported) {
+  const detected = getSupportedMimeTypeForFilename(fileName);
+  if (!detected?.ok || detected.value.category !== 'rdf') {
     throw new Error(
       'Unsupported ontology file type. Supported inputs are Turtle, N-Triples, N-Quads, TriG, N3, JSON-LD, and RDF/XML.'
     );
   }
+}
+
+/**
+ * Parses ontology text into the retained app-level ontology state shape.
+ *
+ * @param {string} ontologyText
+ * @param {string} [fileName='ontology.ttl']
+ * @param {{ baseIri?: string | null, runtime?: object }} [options]
+ * @returns {Promise<{ store: any, prefixes: Record<string, string>, sourceFormat: string, baseIri: string | null }>}
+ */
+export async function parseOntologyInput(ontologyText, fileName = 'ontology.ttl', options = {}) {
+  if (typeof ontologyText !== 'string') {
+    throw new TypeError('parseOntologyInput() requires ontologyText to be a string.');
+  }
+
+  assertSupportedOntologyFile(fileName);
+  const sourceFormat = guessRdfFormatFromFilename(fileName);
+  const baseIri = typeof options.baseIri === 'string' && options.baseIri.trim()
+    ? options.baseIri.trim()
+    : null;
+  const parsed = await parseRdfTextWithAdapters(ontologyText, {
+    format: sourceFormat,
+    baseIri,
+    runtime: options.runtime || getRdfRuntimeLibraries()
+  });
+
+  return {
+    store: parsed.dataset,
+    prefixes: parsed.prefixes || {},
+    sourceFormat,
+    baseIri
+  };
+}
+
+/**
+ * Serializes one RDF/JS-compatible store for ontology export.
+ *
+ * @param {any} store
+ * @param {string} format
+ * @param {{ prefixes?: Record<string, string>, baseIri?: string | null, runtime?: object }} [options]
+ * @returns {Promise<string>}
+ */
+export async function serializeOntologyStore(store, format, options = {}) {
+  if (!store || typeof store.getQuads !== 'function') {
+    throw new TypeError('serializeOntologyStore() requires an RDF/JS-compatible store.');
+  }
+
+  const normalized = normalizeSupportedMimeType(format);
+  if (!normalized?.ok || normalized.value.category !== 'rdf') {
+    throw new Error(`Unsupported RDF serialization format: ${String(format)}`);
+  }
+
+  const baseIri = typeof options.baseIri === 'string' && options.baseIri.trim()
+    ? options.baseIri.trim()
+    : null;
+  const serialized = await serializeRdfDatasetWithAdapters(store, {
+    format: normalized.value.mimeType,
+    prefixes: options.prefixes || {},
+    baseIri,
+    runtime: options.runtime || getRdfRuntimeLibraries()
+  });
+  return serialized.text;
 }
 
 /**
@@ -268,7 +322,7 @@ export async function loadOntologyIntoStore(ontologyText, fileName = 'ontology.t
   }
 
   assertSupportedOntologyFile(fileName);
-  const parsed = await parseRdfInput(ontologyText, fileName);
+  const parsed = await parseOntologyInput(ontologyText, fileName);
   return parsed.store;
 }
 
@@ -514,8 +568,8 @@ export function guessOntologyIri(store) {
 
   for (const quad of quads) {
     if (
-      quad?.predicate?.value === RDF_TYPE_IRI &&
-      quad?.object?.value === OWL_ONTOLOGY_IRI
+      quad?.predicate?.value === NS.rdf.type &&
+      quad?.object?.value === NS.owl.Ontology
     ) {
       return quad.subject.value;
     }
@@ -569,7 +623,7 @@ export function getObjectValues(store, subjectIri, predicateIri) {
 export function getNormalizedObjectValues(store, subjectIri, predicateIri) {
   const rawValues = getObjectValues(store, subjectIri, predicateIri);
 
-  if (predicateIri === OBO_IAO_0000114_IRI) {
+  if (predicateIri === NS.iao.curationStatus) {
     const normalizedStatuses = rawValues
       .map((value) => ({
         iri: value,
@@ -618,7 +672,7 @@ function getLiteralDisplayValue(term) {
   if (language) {
     return `"${value}"@${language}`;
   }
-  if (datatypeIri && datatypeIri !== 'http://www.w3.org/2001/XMLSchema#string') {
+  if (datatypeIri && datatypeIri !== NS.xsd.string) {
     return `"${value}"^^${datatypeIri}`;
   }
   return value;
@@ -636,11 +690,11 @@ function getNamedNodeDisplayValue(store, iri, predicateIri) {
   if (!iri) {
     return '';
   }
-  if (predicateIri === OBO_IAO_0000114_IRI) {
+  if (predicateIri === NS.iao.curationStatus) {
     return getCurationStatusLabel(iri);
   }
 
-  const label = getFirstObjectValue(store, iri, RDFS_LABEL_IRI);
+  const label = getFirstObjectValue(store, iri, NS.rdfs.label);
   return label || KNOWN_IRI_LABELS[iri] || iri;
 }
 
@@ -821,7 +875,7 @@ export function extractResourceDetails(store, resources, results = []) {
  */
 export function collectLabeledResources(store) {
   const labeled = new Set();
-  const quads = store.getQuads(null, RDFS_LABEL_IRI, null, null);
+  const quads = store.getQuads(null, NS.rdfs.label, null, null);
 
   for (const quad of quads) {
     if (quad?.subject?.value) {
@@ -867,14 +921,14 @@ export function extractOntologyMetadata(store, fileName) {
     fileName: fileName || 'ontology.ttl',
     ontologyIri,
     title:
-      getFirstObjectValue(store, ontologyIri, DCTERMS_TITLE_IRI) ||
-      getFirstObjectValue(store, ontologyIri, RDFS_LABEL_IRI),
-    description: getFirstObjectValue(store, ontologyIri, DCTERMS_DESCRIPTION_IRI),
-    versionIri: getFirstObjectValue(store, ontologyIri, OWL_VERSION_IRI),
-    versionInfo: getFirstObjectValue(store, ontologyIri, OWL_VERSION_INFO_IRI),
-    license: getFirstObjectValue(store, ontologyIri, DCTERMS_LICENSE_IRI),
-    accessRights: getFirstObjectValue(store, ontologyIri, DCTERMS_ACCESS_RIGHTS_IRI),
-    imports: getObjectValues(store, ontologyIri, OWL_IMPORTS_IRI).sort(),
+      getFirstObjectValue(store, ontologyIri, NS.dcterms.title) ||
+      getFirstObjectValue(store, ontologyIri, NS.rdfs.label),
+    description: getFirstObjectValue(store, ontologyIri, NS.dcterms.description),
+    versionIri: getFirstObjectValue(store, ontologyIri, NS.owl.versionIRI),
+    versionInfo: getFirstObjectValue(store, ontologyIri, NS.owl.versionInfo),
+    license: getFirstObjectValue(store, ontologyIri, NS.dcterms.license),
+    accessRights: getFirstObjectValue(store, ontologyIri, NS.dcterms.accessRights),
+    imports: getObjectValues(store, ontologyIri, NS.owl.imports).sort(),
     tripleCount: quads.length,
     labeledResourceCount: labeledResources.length
   };
@@ -953,8 +1007,8 @@ function getCceoCuratedInOntologyPredicateIris(store) {
  */
 function getDependencyCuratedInValue(lookupStore, iri, cceoFallbackPredicates = []) {
   const curatedIn = getFirstPreferredNamedNodeValue(lookupStore, iri, [
-    CCO_CURATED_IN_ONTOLOGY_IRI,
-    RDFS_IS_DEFINED_BY_IRI,
+    NS.cco.curatedIn,
+    NS.rdfs.isDefinedBy,
     ...cceoFallbackPredicates
   ]);
 
@@ -1041,8 +1095,8 @@ export function extractExternalIriDependencies(primaryStore, lookupStore = prima
   return Array.from(dependencies.values())
     .map((entry) => {
       const label = getFirstPreferredLiteralValue(lookupStore, entry.iri, [
-        RDFS_LABEL_IRI,
-        SKOS_PREF_LABEL_IRI
+        NS.rdfs.label,
+        NS.skos.prefLabel
       ]) || '';
       return {
         iri: entry.iri,

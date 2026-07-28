@@ -77,10 +77,8 @@ describe('engine ownership helpers', () => {
   });
 
   test('extractExternalIriDependencies collects primary predicate/object IRIs and enriches from lookup store', async () => {
-    const {
-      extractExternalIriDependencies,
-      CCO_CURATED_IN_ONTOLOGY_IRI
-    } = await import('../docs/app/engine.js');
+    const { extractExternalIriDependencies } = await import('../docs/app/engine.js');
+    const { COMMON_NAMESPACE_IRIS } = await import('../docs/app/shared/namespace-registry/namespace-registry.js');
     const { namedNode, literal, quad } = N3.DataFactory;
 
     const primaryStore = new N3.Store([
@@ -109,7 +107,7 @@ describe('engine ownership helpers', () => {
     );
     lookupStore.addQuad(
       namedNode('http://example.org/import/B'),
-      namedNode(CCO_CURATED_IN_ONTOLOGY_IRI),
+      namedNode(COMMON_NAMESPACE_IRIS.cco.curatedIn),
       namedNode('http://example.org/import/ontology')
     );
 

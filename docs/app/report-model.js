@@ -6,18 +6,20 @@ import {
   collectLabeledResources,
   evaluateAllQueries,
   evaluateQueriesAgainstStore,
-  extractExternalIriDependencies,
-  OBO_IAO_0000114_IRI
+  extractExternalIriDependencies
 } from './engine.js';
 import {
   computePerResourceCuration,
   computeOntologyReport
 } from './grader.js';
+import { COMMON_NAMESPACE_IRIS } from './shared/namespace-registry/namespace-registry.js';
 
 /** @typedef {import('./types.js').Manifest} Manifest */
 /** @typedef {import('./types.js').EvaluatedReport} EvaluatedReport */
 /** @typedef {import('./types.js').InspectionScope} InspectionScope */
 /** @typedef {import('./types.js').QueryResultRow} QueryResultRow */
+
+const NS = COMMON_NAMESPACE_IRIS;
 
 /**
  * @typedef {Object} InspectProgress
@@ -72,7 +74,7 @@ export function buildInspectionItem(input) {
     const resourceDetail = resourceDetails?.[row.resource];
     const statusAssertion = Array.isArray(resourceDetail?.outgoingAssertions)
       ? resourceDetail.outgoingAssertions.find(
-        (assertion) => assertion.predicateIri === OBO_IAO_0000114_IRI
+        (assertion) => assertion.predicateIri === NS.iao.curationStatus
       )
       : null;
 
