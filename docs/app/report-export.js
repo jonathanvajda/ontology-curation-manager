@@ -5,10 +5,9 @@ import { getStandardDetailEntries } from './render-standards.js';
 import { getCriterionDefinition } from './criteria.js';
 import {
   escapeHtml,
-  getReportStandards,
-  rowsToCsv
+  getReportStandards
 } from './shared.js';
-import { downloadTextFile as downloadBrowserTextFile } from './shared/browser-file-io/index.js';
+import { serializeDelimitedRows } from './shared/tabular-io/index.js';
 
 /** @typedef {import('./types.js').EvaluatedReport} EvaluatedReport */
 /** @typedef {import('./types.js').ExportState} ExportState */
@@ -16,18 +15,6 @@ import { downloadTextFile as downloadBrowserTextFile } from './shared/browser-fi
 /** @typedef {import('./types.js').OntologyReport} OntologyReport */
 /** @typedef {import('./types.js').PerResourceCurationRow} PerResourceCurationRow */
 /** @typedef {import('./types.js').QueryResultRow} QueryResultRow */
-
-/**
- * Downloads a text file.
- *
- * @param {string} text
- * @param {string} fileName
- * @param {string} mimeType
- * @returns {void}
- */
-export function downloadTextFile(text, fileName, mimeType) {
-  downloadBrowserTextFile(fileName, text, { mimeType });
-}
 
 /**
  * Serializes result rows as CSV.
@@ -60,7 +47,7 @@ export function buildResultsCsv(results, ontologyIri) {
     ]);
   }
 
-  return rowsToCsv(rows);
+  return serializeDelimitedRows(rows, { delimiter: ',', trailingNewline: true });
 }
 
 /**
@@ -128,7 +115,7 @@ export function buildFilteredResourcesCsv(perResourceRows) {
     ]);
   }
 
-  return rowsToCsv(rows);
+  return serializeDelimitedRows(rows, { delimiter: ',', trailingNewline: true });
 }
 
 /**
@@ -158,7 +145,7 @@ export function buildStandardDetailCsv(criterionId, results) {
     ]);
   }
 
-  return rowsToCsv(rows);
+  return serializeDelimitedRows(rows, { delimiter: ',', trailingNewline: true });
 }
 
 /**
@@ -218,7 +205,7 @@ export function buildBatchSummaryCsv(batchReports) {
     ]);
   }
 
-  return rowsToCsv(rows);
+  return serializeDelimitedRows(rows, { delimiter: ',', trailingNewline: true });
 }
 
 /**

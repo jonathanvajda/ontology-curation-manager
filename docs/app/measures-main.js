@@ -25,8 +25,7 @@ import {
   buildMeasuresTsv,
   buildMeasuresYaml
 } from './measures-export.js';
-import { downloadTextFile } from './report-export.js';
-import { createAcceptAttribute } from './shared/browser-file-io/index.js';
+import { createAcceptAttribute, downloadTextFile } from './shared/browser-file-io/index.js';
 import { SUPPORTED_MIME_DESCRIPTORS } from './shared/format-registry/mime-registry.js';
 import {
   renderImportSnippetModal,
@@ -592,9 +591,9 @@ function downloadSeedForAnalysis(analysisKey) {
   ) || 'ontology';
 
   downloadTextFile(
-    buildExternalDependenciesSeedText(analysis.externalIriDependencies, activeDependencySort),
     `${fileStem}_ontology-slim-seed_${getTimestampForFileName()}.txt`,
-    'text/plain;charset=utf-8'
+    buildExternalDependenciesSeedText(analysis.externalIriDependencies, activeDependencySort),
+    { mimeType: 'text/plain;charset=utf-8' }
   );
   setStatus(`Downloaded seed file for ${analysis.fileName}.`);
 }
@@ -661,7 +660,7 @@ function downloadMeasuresForAnalysis(analysisKey) {
       break;
   }
 
-  downloadTextFile(exportPayload.text, exportPayload.fileName, exportPayload.mimeType);
+  downloadTextFile(exportPayload.fileName, exportPayload.text, { mimeType: exportPayload.mimeType });
   setStatus(`Downloaded ${format.toUpperCase()} measures export for ${analysis.fileName}.`);
 }
 
@@ -724,7 +723,7 @@ function downloadAllAnalyses() {
       break;
   }
 
-  downloadTextFile(exportPayload.text, exportPayload.fileName, exportPayload.mimeType);
+  downloadTextFile(exportPayload.fileName, exportPayload.text, { mimeType: exportPayload.mimeType });
   setStatus(`Downloaded ${format.toUpperCase()} export for ${lastAnalyses.length} ontology analyses.`);
 }
 

@@ -1,8 +1,6 @@
 // app/shared.js
 // @ts-check
 
-import { escapeDelimitedCell, serializeDelimitedRows } from './shared/tabular-io/index.js';
-
 /** @typedef {import('./types.js').OntologyReport} OntologyReport */
 /** @typedef {import('./types.js').OntologyReportStandardRow} OntologyReportStandardRow */
 
@@ -62,29 +60,6 @@ export function getTimestampForFileName() {
   const mi = String(date.getMinutes()).padStart(2, '0');
   const ss = String(date.getSeconds()).padStart(2, '0');
   return `${yyyy}-${mm}-${dd}_${hh}-${mi}-${ss}`;
-}
-
-/**
- * Escapes one CSV field.
- *
- * @param {unknown} value
- * @returns {string}
- */
-export function csvEscape(value) {
-  return escapeDelimitedCell(value, { delimiter: ',' });
-}
-
-/**
- * Converts rows to CSV text.
- *
- * @param {Array<Array<unknown>>} rows
- * @returns {string}
- */
-export function rowsToCsv(rows) {
-  return serializeDelimitedRows(rows, {
-    delimiter: ',',
-    trailingNewline: true
-  });
 }
 
 /**

@@ -41,14 +41,13 @@ import {
   buildHtmlReport,
   buildOntologyReportYaml,
   buildResultsCsv,
-  buildStandardDetailCsv,
-  downloadTextFile
+  buildStandardDetailCsv
 } from './report-export.js';
 import {
   SUPPORTED_MIME_DESCRIPTORS,
   getPreferredExtensionForMimeType
 } from './shared/format-registry/mime-registry.js';
-import { createAcceptAttribute } from './shared/browser-file-io/index.js';
+import { createAcceptAttribute, downloadTextFile } from './shared/browser-file-io/index.js';
 import { COMMON_NAMESPACE_IRIS } from './shared/namespace-registry/namespace-registry.js';
 
 /** @typedef {import('./types.js').BatchRunPayload} BatchRunPayload */
@@ -1605,16 +1604,6 @@ function getFileExtensionForFormat(format) {
 }
 
 /**
- * Returns a MIME type for one RDF format.
- *
- * @param {string} format
- * @returns {string}
- */
-function getMimeTypeForFormat(format) {
-  return `${format};charset=utf-8`;
-}
-
-/**
  * Exports the edited primary ontology.
  *
  * @returns {Promise<void>}
@@ -1637,7 +1626,7 @@ async function exportEditedOntology() {
       editedPrimary.fileName.replace(/\.[^.]+$/, '') || 'ontology'
     ) || 'ontology';
     const fileName = `${fileStem}_edited_${getTimestampForFileName()}${getFileExtensionForFormat(targetFormat)}`;
-    downloadTextFile(serialized, fileName, getMimeTypeForFormat(targetFormat));
+    downloadTextFile(fileName, serialized, { mimeType: targetFormat });
     setStatus(`Exported edited ontology as ${fileName}.`);
   } catch (error) {
     console.error('Error exporting edited ontology:', error);
@@ -1993,7 +1982,7 @@ function handleDownloadSelected() {
   }
 
   try {
-    downloadTextFile(action.build(), action.getFileName(), action.mimeType);
+    downloadTextFile(action.getFileName(), action.build(), { mimeType: action.mimeType });
     setStatus(`Downloaded ${action.label}.`);
   } catch (error) {
     console.error(error);
