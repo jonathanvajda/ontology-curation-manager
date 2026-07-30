@@ -18,7 +18,8 @@
     "jest": "^29.7.0"
   },
   "scripts": {
-    "lint": "eslint . --ext .js,.mjs",
+    "check": "npm run lint && npm test",
+    "lint": "eslint . --quiet",
     "test": "npm run test:jest",
     "test:jest": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand"
   },
