@@ -11,7 +11,7 @@ import {
 } from './engine.js';
 import { buildFailuresIndex } from './grader.js';
 import { inspectStore } from './report-model.js';
-import { saveRun, listRuns, getRun, deleteRun, getLastRunId } from './storage.js';
+import { saveRun, listRuns, getRun, deleteRun, getLastRunId, readThemePreference, writeThemePreference } from './storage.js';
 import { populateStandardFilter } from './criteria.js';
 import {
   escapeHtml,
@@ -466,16 +466,19 @@ async function refreshSavedRunsUi() {
  * Sets the app theme.
  *
  * @param {'ocd-theme-light' | 'ocd-theme-dark'} themeClass
+ * @param {{persist?: boolean}} [options]
  * @returns {void}
  */
-function setTheme(themeClass) {
+function setTheme(themeClass, { persist = true } = {}) {
   if (!appRoot) {
     return;
   }
 
   appRoot.classList.remove('ocd-theme-light', 'ocd-theme-dark');
   appRoot.classList.add(themeClass);
-  localStorage.setItem('ocd-theme', themeClass);
+  if (persist) {
+    void writeThemePreference(themeClass);
+  }
 }
 
 /**
@@ -493,14 +496,14 @@ function toggleTheme() {
 }
 
 /**
- * Restores the theme from local storage.
+ * Restores the theme from shared app settings.
  *
- * @returns {void}
+ * @returns {Promise<void>}
  */
-function initTheme() {
-  const savedTheme = localStorage.getItem('ocd-theme');
+async function initTheme() {
+  const savedTheme = await readThemePreference();
   if (savedTheme === 'ocd-theme-dark' || savedTheme === 'ocd-theme-light') {
-    setTheme(savedTheme);
+    setTheme(savedTheme, { persist: false });
   }
 }
 
@@ -2224,7 +2227,7 @@ async function runInspectionFromSelectedFiles() {
  * @returns {Promise<void>}
  */
 async function initializeApp() {
-  initTheme();
+  await initTheme();
   renderPreflightUi();
   updateRunButtonState();
   updateCurationFiltersVisibility();
