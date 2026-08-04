@@ -13,7 +13,6 @@ import { COMMON_NAMESPACE_IRIS } from './shared/namespace-registry/namespace-reg
 
 /** @type {HTMLElement | null} */
 const editSessionContainer = document.getElementById('editSessionContainer');
-const NS = COMMON_NAMESPACE_IRIS;
 
 /**
  * Returns one display label for an RDF format.
@@ -105,19 +104,19 @@ export function renderEditSession(editSession, container = editSessionContainer)
   html += '</label>';
   html += '<label class="ocd-filter">';
   html += '<span class="ocd-label">Curator note</span>';
-  html += '<textarea id="bulkCuratorNoteInput" class="ocd-input ocd-textarea" rows="2" data-predicate-iri="' + escapeHtml(NS.iao.curatorNote) + '"></textarea>';
+  html += '<textarea id="bulkCuratorNoteInput" class="ocd-input ocd-textarea" rows="2" data-predicate-iri="' + escapeHtml(COMMON_NAMESPACE_IRIS.iao.curatorNote) + '"></textarea>';
   html += '</label>';
   html += '<label class="ocd-filter">';
   html += '<span class="ocd-label">Has obsolescence reason</span>';
-  html += '<textarea id="bulkObsolescenceReasonInput" class="ocd-input ocd-textarea" rows="2" data-predicate-iri="' + escapeHtml(NS.iao.obsolescenceReason) + '"></textarea>';
+  html += '<textarea id="bulkObsolescenceReasonInput" class="ocd-input ocd-textarea" rows="2" data-predicate-iri="' + escapeHtml(COMMON_NAMESPACE_IRIS.iao.obsolescenceReason) + '"></textarea>';
   html += '</label>';
   html += '<label class="ocd-filter">';
   html += '<span class="ocd-label">Term replaced by</span>';
-  html += '<input id="bulkTermReplacedByInput" class="ocd-input ocd-mono" type="text" data-predicate-iri="' + escapeHtml(NS.iao.termReplacedBy) + '" placeholder="IRI" />';
+  html += '<input id="bulkTermReplacedByInput" class="ocd-input ocd-mono" type="text" data-predicate-iri="' + escapeHtml(COMMON_NAMESPACE_IRIS.iao.termReplacedBy) + '" placeholder="IRI" />';
   html += '</label>';
   html += '<label class="ocd-filter">';
   html += '<span class="ocd-label">Comment</span>';
-  html += '<textarea id="bulkCommentInput" class="ocd-input ocd-textarea" rows="2" data-predicate-iri="' + escapeHtml(NS.rdfs.comment) + '"></textarea>';
+  html += '<textarea id="bulkCommentInput" class="ocd-input ocd-textarea" rows="2" data-predicate-iri="' + escapeHtml(COMMON_NAMESPACE_IRIS.rdfs.comment) + '"></textarea>';
   html += '</label>';
   html += '</div>';
   html += '<div class="ocd-actions" style="margin-top:12px;">';

@@ -18,17 +18,16 @@ import {
 
 /** @type {HTMLElement | null} */
 const ontologyReportContainer = document.getElementById('ontologyReportContainer');
-const NS = COMMON_NAMESPACE_IRIS;
 
 const ONTOLOGY_METADATA_PREDICATES = new Set([
-  NS.rdf.type,
-  NS.dcterms.title,
-  NS.dcterms.description,
-  NS.owl.versionIRI,
-  NS.owl.versionInfo,
-  NS.dcterms.license,
-  NS.dcterms.accessRights,
-  NS.owl.imports
+  COMMON_NAMESPACE_IRIS.rdf.type,
+  COMMON_NAMESPACE_IRIS.dcterms.title,
+  COMMON_NAMESPACE_IRIS.dcterms.description,
+  COMMON_NAMESPACE_IRIS.owl.versionIRI,
+  COMMON_NAMESPACE_IRIS.owl.versionInfo,
+  COMMON_NAMESPACE_IRIS.dcterms.license,
+  COMMON_NAMESPACE_IRIS.dcterms.accessRights,
+  COMMON_NAMESPACE_IRIS.owl.imports
 ]);
 
 /**
@@ -204,19 +203,19 @@ function renderOntologyAnnotations(ontologyIri, ontologyDetail) {
   html += '<div class="ocd-editor-grid">';
   html += '<label class="ocd-filter">';
   html += '<span class="ocd-label">Curator note</span>';
-  html += '<textarea class="ocd-input ocd-textarea" rows="2" data-ontology-note="' + escapeHtml(ontologyIri) + '" data-predicate-iri="' + escapeHtml(NS.iao.curatorNote) + '"></textarea>';
+  html += '<textarea class="ocd-input ocd-textarea" rows="2" data-ontology-note="' + escapeHtml(ontologyIri) + '" data-predicate-iri="' + escapeHtml(COMMON_NAMESPACE_IRIS.iao.curatorNote) + '"></textarea>';
   html += '</label>';
   html += '<label class="ocd-filter">';
   html += '<span class="ocd-label">Has obsolescence reason</span>';
-  html += '<textarea class="ocd-input ocd-textarea" rows="2" data-ontology-note="' + escapeHtml(ontologyIri) + '" data-predicate-iri="' + escapeHtml(NS.iao.obsolescenceReason) + '"></textarea>';
+  html += '<textarea class="ocd-input ocd-textarea" rows="2" data-ontology-note="' + escapeHtml(ontologyIri) + '" data-predicate-iri="' + escapeHtml(COMMON_NAMESPACE_IRIS.iao.obsolescenceReason) + '"></textarea>';
   html += '</label>';
   html += '<label class="ocd-filter">';
   html += '<span class="ocd-label">Term replaced by</span>';
-  html += '<input class="ocd-input ocd-mono" type="text" data-ontology-note="' + escapeHtml(ontologyIri) + '" data-predicate-iri="' + escapeHtml(NS.iao.termReplacedBy) + '" placeholder="IRI" />';
+  html += '<input class="ocd-input ocd-mono" type="text" data-ontology-note="' + escapeHtml(ontologyIri) + '" data-predicate-iri="' + escapeHtml(COMMON_NAMESPACE_IRIS.iao.termReplacedBy) + '" placeholder="IRI" />';
   html += '</label>';
   html += '<label class="ocd-filter">';
   html += '<span class="ocd-label">Comment</span>';
-  html += '<textarea class="ocd-input ocd-textarea" rows="2" data-ontology-note="' + escapeHtml(ontologyIri) + '" data-predicate-iri="' + escapeHtml(NS.rdfs.comment) + '"></textarea>';
+  html += '<textarea class="ocd-input ocd-textarea" rows="2" data-ontology-note="' + escapeHtml(ontologyIri) + '" data-predicate-iri="' + escapeHtml(COMMON_NAMESPACE_IRIS.rdfs.comment) + '"></textarea>';
   html += '</label>';
   html += '<label class="ocd-filter">';
   html += '<span class="ocd-label">Arbitrary predicate IRI</span>';
@@ -239,7 +238,7 @@ function renderOntologyAnnotations(ontologyIri, ontologyDetail) {
   html += '</label>';
   html += '<label class="ocd-filter">';
   html += '<span class="ocd-label">Literal datatype IRI</span>';
-  html += '<input class="ocd-input ocd-mono" type="text" data-ontology-arbitrary-object-datatype="' + escapeHtml(ontologyIri) + '" placeholder="' + escapeHtml(NS.xsd.string) + '" />';
+  html += '<input class="ocd-input ocd-mono" type="text" data-ontology-arbitrary-object-datatype="' + escapeHtml(ontologyIri) + '" placeholder="' + escapeHtml(COMMON_NAMESPACE_IRIS.xsd.string) + '" />';
   html += '</label>';
   html += '</div>';
   html += '<div class="ocd-actions" style="margin-top:12px;">';

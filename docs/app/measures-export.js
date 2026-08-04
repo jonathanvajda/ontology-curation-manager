@@ -4,7 +4,6 @@
 import { escapeHtml } from './shared.js';
 import { COMMON_NAMESPACE_IRIS } from './shared/namespace-registry/namespace-registry.js';
 
-const NS = COMMON_NAMESPACE_IRIS;
 import { serializeDelimitedRecords } from './shared/tabular-io/index.js';
 
 /** @typedef {import('./types.js').ExternalIriDependency} ExternalIriDependency */
@@ -114,11 +113,11 @@ export function buildImportSnippetText(ontologyIri, importIris, format = 'ttl') 
       }
       return rows.map((iri) => `<owl:imports rdf:resource="${iri}"/>`).join('\n');
     case 'ntriples':
-      return rows.map((iri) => `<${subjectIri}> <${NS.owl.imports}> <${iri}> .`).join('\n');
+      return rows.map((iri) => `<${subjectIri}> <${COMMON_NAMESPACE_IRIS.owl.imports}> <${iri}> .`).join('\n');
     case 'jsonld':
       return `${JSON.stringify({
         '@id': subjectIri,
-        [NS.owl.imports]: rows.map((iri) => ({ '@id': iri }))
+        [COMMON_NAMESPACE_IRIS.owl.imports]: rows.map((iri) => ({ '@id': iri }))
       }, null, 2)}\n`;
     case 'ttl':
     default:

@@ -77,7 +77,6 @@ export const DEFAULT_STANDARDS_MANIFEST_URL = './queries/standards-manifest.json
 export const UNKNOWN_ONTOLOGY_IRI = 'urn:ontology:unknown';
 
 const CCEO_CURATED_IN_ONTOLOGY_LOCAL_NAME = 'is_curated_in_ontology';
-const NS = COMMON_NAMESPACE_IRIS;
 const STANDARD_PREFIXES = namespacePrefixMapFromRegistry();
 
 /** @type {ReadonlyArray<{ namespace: string, curatedIn: string }>} */
@@ -110,44 +109,44 @@ const KNOWN_VOCABULARY_CURATED_IN_FALLBACKS = Object.freeze([
 
 /** @type {ReadonlySet<string>} */
 const BUILT_IN_DEPENDENCY_IRI_EXCLUSIONS = Object.freeze(new Set([
-  NS.rdf.nil
+  COMMON_NAMESPACE_IRIS.rdf.nil
 ]));
 
 /** @type {ReadonlyArray<{ id: string, predicateIri: string, label: string }>} */
 const RESOURCE_DETAIL_PREDICATES = Object.freeze([
-  { id: 'rdfType', predicateIri: NS.rdf.type, label: 'RDF type' },
-  { id: 'label', predicateIri: NS.rdfs.label, label: 'Label' },
-  { id: 'definitionSkos', predicateIri: NS.skos.definition, label: 'Definition' },
-  { id: 'definitionIao', predicateIri: NS.iao.definition, label: 'Definition (IAO:0000115)' },
-  { id: 'altLabelSkos', predicateIri: NS.skos.altLabel, label: 'Alternative label' },
-  { id: 'altTermIao', predicateIri: NS.iao.alternativeTerm, label: 'Alternative term (IAO:0000118)' },
-  { id: 'acronym', predicateIri: NS.cco.acronym, label: 'Acronym' },
-  { id: 'exampleSkos', predicateIri: NS.skos.example, label: 'Example' },
-  { id: 'exampleIao', predicateIri: NS.iao.exampleOfUsage, label: 'Example of usage (IAO:0000112)' },
-  { id: 'scopeNote', predicateIri: NS.skos.scopeNote, label: 'Scope note' },
-  { id: 'bibliographicCitation', predicateIri: NS.dcterms.bibliographicCitation, label: 'Bibliographic citation' },
-  { id: 'definitionSource', predicateIri: NS.iao.definitionSource, label: 'Definition source (IAO:0000119)' },
-  { id: 'isDefinedBy', predicateIri: NS.rdfs.isDefinedBy, label: 'Is defined by' },
-  { id: 'curatedInOntology', predicateIri: NS.cco.curatedIn, label: 'Is curated in ontology' },
-  { id: 'curationStatus', predicateIri: NS.iao.curationStatus, label: 'Has curation status' },
-  { id: 'obsolescenceReason', predicateIri: NS.iao.obsolescenceReason, label: 'Has obsolescence reason' },
-  { id: 'curatorNote', predicateIri: NS.iao.curatorNote, label: 'Curator note' },
-  { id: 'termReplacedBy', predicateIri: NS.iao.termReplacedBy, label: 'Term replaced by' },
-  { id: 'subClassOf', predicateIri: NS.rdfs.subClassOf, label: 'SubClassOf' },
-  { id: 'subPropertyOf', predicateIri: NS.rdfs.subPropertyOf, label: 'SubPropertyOf' },
-  { id: 'inverseOf', predicateIri: NS.owl.inverseOf, label: 'Inverse property' },
-  { id: 'domain', predicateIri: NS.rdfs.domain, label: 'Domain' },
-  { id: 'range', predicateIri: NS.rdfs.range, label: 'Range' },
-  { id: 'comment', predicateIri: NS.rdfs.comment, label: 'Comment' }
+  { id: 'rdfType', predicateIri: COMMON_NAMESPACE_IRIS.rdf.type, label: 'RDF type' },
+  { id: 'label', predicateIri: COMMON_NAMESPACE_IRIS.rdfs.label, label: 'Label' },
+  { id: 'definitionSkos', predicateIri: COMMON_NAMESPACE_IRIS.skos.definition, label: 'Definition' },
+  { id: 'definitionIao', predicateIri: COMMON_NAMESPACE_IRIS.iao.definition, label: 'Definition (IAO:0000115)' },
+  { id: 'altLabelSkos', predicateIri: COMMON_NAMESPACE_IRIS.skos.altLabel, label: 'Alternative label' },
+  { id: 'altTermIao', predicateIri: COMMON_NAMESPACE_IRIS.iao.alternativeTerm, label: 'Alternative term (IAO:0000118)' },
+  { id: 'acronym', predicateIri: COMMON_NAMESPACE_IRIS.cceo.acronym, label: 'Acronym' },
+  { id: 'exampleSkos', predicateIri: COMMON_NAMESPACE_IRIS.skos.example, label: 'Example' },
+  { id: 'exampleIao', predicateIri: COMMON_NAMESPACE_IRIS.iao.exampleOfUsage, label: 'Example of usage (IAO:0000112)' },
+  { id: 'scopeNote', predicateIri: COMMON_NAMESPACE_IRIS.skos.scopeNote, label: 'Scope note' },
+  { id: 'bibliographicCitation', predicateIri: COMMON_NAMESPACE_IRIS.dcterms.bibliographicCitation, label: 'Bibliographic citation' },
+  { id: 'definitionSource', predicateIri: COMMON_NAMESPACE_IRIS.iao.definitionSource, label: 'Definition source (IAO:0000119)' },
+  { id: 'isDefinedBy', predicateIri: COMMON_NAMESPACE_IRIS.rdfs.isDefinedBy, label: 'Is defined by' },
+  { id: 'curatedInOntology', predicateIri: COMMON_NAMESPACE_IRIS.cceo.curatedIn, label: 'Is curated in ontology' },
+  { id: 'curationStatus', predicateIri: COMMON_NAMESPACE_IRIS.iao.curationStatus, label: 'Has curation status' },
+  { id: 'obsolescenceReason', predicateIri: COMMON_NAMESPACE_IRIS.iao.obsolescenceReason, label: 'Has obsolescence reason' },
+  { id: 'curatorNote', predicateIri: COMMON_NAMESPACE_IRIS.iao.curatorNote, label: 'Curator note' },
+  { id: 'termReplacedBy', predicateIri: COMMON_NAMESPACE_IRIS.iao.termReplacedBy, label: 'Term replaced by' },
+  { id: 'subClassOf', predicateIri: COMMON_NAMESPACE_IRIS.rdfs.subClassOf, label: 'SubClassOf' },
+  { id: 'subPropertyOf', predicateIri: COMMON_NAMESPACE_IRIS.rdfs.subPropertyOf, label: 'SubPropertyOf' },
+  { id: 'inverseOf', predicateIri: COMMON_NAMESPACE_IRIS.owl.inverseOf, label: 'Inverse property' },
+  { id: 'domain', predicateIri: COMMON_NAMESPACE_IRIS.rdfs.domain, label: 'Domain' },
+  { id: 'range', predicateIri: COMMON_NAMESPACE_IRIS.rdfs.range, label: 'Range' },
+  { id: 'comment', predicateIri: COMMON_NAMESPACE_IRIS.rdfs.comment, label: 'Comment' }
 ]);
 
 /** @type {Readonly<Record<string, string>>} */
 const KNOWN_IRI_LABELS = Object.freeze({
-  [NS.owl.Class]: 'owl:Class',
-  [NS.owl.NamedIndividual]: 'owl:NamedIndividual',
-  [NS.owl.ObjectProperty]: 'owl:ObjectProperty',
-  [NS.owl.DatatypeProperty]: 'owl:DatatypeProperty',
-  [NS.owl.AnnotationProperty]: 'owl:AnnotationProperty'
+  [COMMON_NAMESPACE_IRIS.owl.Class]: 'owl:Class',
+  [COMMON_NAMESPACE_IRIS.owl.NamedIndividual]: 'owl:NamedIndividual',
+  [COMMON_NAMESPACE_IRIS.owl.ObjectProperty]: 'owl:ObjectProperty',
+  [COMMON_NAMESPACE_IRIS.owl.DatatypeProperty]: 'owl:DatatypeProperty',
+  [COMMON_NAMESPACE_IRIS.owl.AnnotationProperty]: 'owl:AnnotationProperty'
 });
 
 /** @type {Readonly<Record<string, string>>} */
@@ -568,8 +567,8 @@ export function guessOntologyIri(store) {
 
   for (const quad of quads) {
     if (
-      quad?.predicate?.value === NS.rdf.type &&
-      quad?.object?.value === NS.owl.Ontology
+      quad?.predicate?.value === COMMON_NAMESPACE_IRIS.rdf.type &&
+      quad?.object?.value === COMMON_NAMESPACE_IRIS.owl.Ontology
     ) {
       return quad.subject.value;
     }
@@ -623,7 +622,7 @@ export function getObjectValues(store, subjectIri, predicateIri) {
 export function getNormalizedObjectValues(store, subjectIri, predicateIri) {
   const rawValues = getObjectValues(store, subjectIri, predicateIri);
 
-  if (predicateIri === NS.iao.curationStatus) {
+  if (predicateIri === COMMON_NAMESPACE_IRIS.iao.curationStatus) {
     const normalizedStatuses = rawValues
       .map((value) => ({
         iri: value,
@@ -672,7 +671,7 @@ function getLiteralDisplayValue(term) {
   if (language) {
     return `"${value}"@${language}`;
   }
-  if (datatypeIri && datatypeIri !== NS.xsd.string) {
+  if (datatypeIri && datatypeIri !== COMMON_NAMESPACE_IRIS.xsd.string) {
     return `"${value}"^^${datatypeIri}`;
   }
   return value;
@@ -690,11 +689,11 @@ function getNamedNodeDisplayValue(store, iri, predicateIri) {
   if (!iri) {
     return '';
   }
-  if (predicateIri === NS.iao.curationStatus) {
+  if (predicateIri === COMMON_NAMESPACE_IRIS.iao.curationStatus) {
     return getCurationStatusLabel(iri);
   }
 
-  const label = getFirstObjectValue(store, iri, NS.rdfs.label);
+  const label = getFirstObjectValue(store, iri, COMMON_NAMESPACE_IRIS.rdfs.label);
   return label || KNOWN_IRI_LABELS[iri] || iri;
 }
 
@@ -875,7 +874,7 @@ export function extractResourceDetails(store, resources, results = []) {
  */
 export function collectLabeledResources(store) {
   const labeled = new Set();
-  const quads = store.getQuads(null, NS.rdfs.label, null, null);
+  const quads = store.getQuads(null, COMMON_NAMESPACE_IRIS.rdfs.label, null, null);
 
   for (const quad of quads) {
     if (quad?.subject?.value) {
@@ -921,14 +920,14 @@ export function extractOntologyMetadata(store, fileName) {
     fileName: fileName || 'ontology.ttl',
     ontologyIri,
     title:
-      getFirstObjectValue(store, ontologyIri, NS.dcterms.title) ||
-      getFirstObjectValue(store, ontologyIri, NS.rdfs.label),
-    description: getFirstObjectValue(store, ontologyIri, NS.dcterms.description),
-    versionIri: getFirstObjectValue(store, ontologyIri, NS.owl.versionIRI),
-    versionInfo: getFirstObjectValue(store, ontologyIri, NS.owl.versionInfo),
-    license: getFirstObjectValue(store, ontologyIri, NS.dcterms.license),
-    accessRights: getFirstObjectValue(store, ontologyIri, NS.dcterms.accessRights),
-    imports: getObjectValues(store, ontologyIri, NS.owl.imports).sort(),
+      getFirstObjectValue(store, ontologyIri, COMMON_NAMESPACE_IRIS.dcterms.title) ||
+      getFirstObjectValue(store, ontologyIri, COMMON_NAMESPACE_IRIS.rdfs.label),
+    description: getFirstObjectValue(store, ontologyIri, COMMON_NAMESPACE_IRIS.dcterms.description),
+    versionIri: getFirstObjectValue(store, ontologyIri, COMMON_NAMESPACE_IRIS.owl.versionIRI),
+    versionInfo: getFirstObjectValue(store, ontologyIri, COMMON_NAMESPACE_IRIS.owl.versionInfo),
+    license: getFirstObjectValue(store, ontologyIri, COMMON_NAMESPACE_IRIS.dcterms.license),
+    accessRights: getFirstObjectValue(store, ontologyIri, COMMON_NAMESPACE_IRIS.dcterms.accessRights),
+    imports: getObjectValues(store, ontologyIri, COMMON_NAMESPACE_IRIS.owl.imports).sort(),
     tripleCount: quads.length,
     labeledResourceCount: labeledResources.length
   };
@@ -1007,8 +1006,8 @@ function getCceoCuratedInOntologyPredicateIris(store) {
  */
 function getDependencyCuratedInValue(lookupStore, iri, cceoFallbackPredicates = []) {
   const curatedIn = getFirstPreferredNamedNodeValue(lookupStore, iri, [
-    NS.cco.curatedIn,
-    NS.rdfs.isDefinedBy,
+    COMMON_NAMESPACE_IRIS.cceo.curatedIn,
+    COMMON_NAMESPACE_IRIS.rdfs.isDefinedBy,
     ...cceoFallbackPredicates
   ]);
 
@@ -1095,8 +1094,8 @@ export function extractExternalIriDependencies(primaryStore, lookupStore = prima
   return Array.from(dependencies.values())
     .map((entry) => {
       const label = getFirstPreferredLiteralValue(lookupStore, entry.iri, [
-        NS.rdfs.label,
-        NS.skos.prefLabel
+        COMMON_NAMESPACE_IRIS.rdfs.label,
+        COMMON_NAMESPACE_IRIS.skos.prefLabel
       ]) || '';
       return {
         iri: entry.iri,

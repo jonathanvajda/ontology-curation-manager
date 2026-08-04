@@ -37,15 +37,14 @@ import { COMMON_NAMESPACE_IRIS } from './shared/namespace-registry/namespace-reg
  * @property {Set<string>} failingResources
  */
 
-const NS = COMMON_NAMESPACE_IRIS;
 
 export const CURATION_STATUS_IRIS = Object.freeze({
-  UNCURATED: NS.iao.uncurated,
-  METADATA_INCOMPLETE: NS.iao.metadataIncomplete,
-  METADATA_COMPLETE: NS.iao.metadataComplete,
-  PENDING_FINAL_VETTING: NS.iao.pendingFinalVetting,
-  REQUIRES_DISCUSSION: NS.iao.requiresDiscussion,
-  READY_FOR_RELEASE: NS.iao.readyForRelease
+  UNCURATED: COMMON_NAMESPACE_IRIS.iao.uncurated,
+  METADATA_INCOMPLETE: COMMON_NAMESPACE_IRIS.iao.metadataIncomplete,
+  METADATA_COMPLETE: COMMON_NAMESPACE_IRIS.iao.metadataComplete,
+  PENDING_FINAL_VETTING: COMMON_NAMESPACE_IRIS.iao.pendingFinalVetting,
+  REQUIRES_DISCUSSION: COMMON_NAMESPACE_IRIS.iao.requiresDiscussion,
+  READY_FOR_RELEASE: COMMON_NAMESPACE_IRIS.iao.readyForRelease
 });
 
 /** @type {Readonly<Record<string, string>>} */

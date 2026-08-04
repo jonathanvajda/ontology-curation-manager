@@ -110,4 +110,44 @@ describe('edit-session helpers', () => {
       )[0]?.object?.value
     ).toBe('Curator comment');
   });
+
+  test('exportPrimaryOntology serializes cloned edited stores with triples', async () => {
+    const {
+      applyStagedEditsToStore,
+      exportPrimaryOntology
+    } = await import('../docs/app/edit-session.js');
+
+    const store = new N3.Store([
+      N3.DataFactory.quad(
+        N3.DataFactory.namedNode('http://example.org/A'),
+        N3.DataFactory.namedNode('http://www.w3.org/2000/01/rdf-schema#label'),
+        N3.DataFactory.literal('A')
+      )
+    ]);
+
+    const editedStore = applyStagedEditsToStore(store, [
+      {
+        id: 'edit-1',
+        kind: 'add-assertion',
+        subject: 'http://example.org/A',
+        predicateIri: 'http://www.w3.org/2000/01/rdf-schema#comment',
+        objects: [{
+          termType: 'Literal',
+          value: 'Curator comment'
+        }]
+      }
+    ]);
+
+    const turtle = await exportPrimaryOntology({
+      store: editedStore,
+      prefixes: { rdfs: 'http://www.w3.org/2000/01/rdf-schema#' },
+      sourceFormat: 'text/turtle',
+      baseIri: null,
+      fileName: 'primary.ttl',
+      originalText: ''
+    }, 'text/turtle');
+
+    expect(turtle).toContain('rdfs:label "A"');
+    expect(turtle).toContain('rdfs:comment "Curator comment"');
+  });
 });

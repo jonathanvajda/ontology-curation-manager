@@ -16,13 +16,12 @@ import { COMMON_NAMESPACE_IRIS } from './shared/namespace-registry/namespace-reg
 /** @typedef {{ Store?: any, DataFactory?: any }} N3Runtime */
 /** @typedef {Window & typeof globalThis & { N3?: N3Runtime }} RuntimeWithN3 */
 
-const NS = COMMON_NAMESPACE_IRIS;
 
 export const EDITABLE_NOTE_PREDICATES = Object.freeze([
-  NS.iao.curatorNote,
-  NS.iao.obsolescenceReason,
-  NS.iao.termReplacedBy,
-  NS.rdfs.comment
+  COMMON_NAMESPACE_IRIS.iao.curatorNote,
+  COMMON_NAMESPACE_IRIS.iao.obsolescenceReason,
+  COMMON_NAMESPACE_IRIS.iao.termReplacedBy,
+  COMMON_NAMESPACE_IRIS.rdfs.comment
 ]);
 
 export const KNOWN_CURATION_STATUS_OPTIONS = Object.freeze([
@@ -90,7 +89,16 @@ function getDataFactory() {
  */
 export function cloneStore(store) {
   const Store = getStoreConstructor();
-  return new Store(store?.getQuads ? store.getQuads(null, null, null, null) : []);
+  const cloned = new Store();
+  const quads = store?.getQuads ? store.getQuads(null, null, null, null) : [];
+  if (typeof cloned.addQuads === 'function') {
+    cloned.addQuads(quads);
+  } else {
+    for (const quad of quads) {
+      cloned.addQuad(quad);
+    }
+  }
+  return cloned;
 }
 
 /**

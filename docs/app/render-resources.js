@@ -19,7 +19,6 @@ import { cssEscapeAttr, escapeHtml } from './shared.js';
 
 /** @type {HTMLElement | null} */
 const curationTableContainer = document.getElementById('curationTableContainer');
-const NS = COMMON_NAMESPACE_IRIS;
 
 const STATUS_OPTIONS = Object.freeze([
   CURATION_STATUS_IRIS.UNCURATED,
@@ -260,21 +259,21 @@ function renderResourceEditor(row) {
   html += '</label>';
   html += '<label class="ocd-filter">';
   html += '<span class="ocd-label">Curator note</span>';
-  html += '<textarea class="ocd-input ocd-textarea" rows="2" data-resource-note="' + escapeHtml(row.resource) + '" data-predicate-iri="' + escapeHtml(NS.iao.curatorNote) + '"></textarea>';
+  html += '<textarea class="ocd-input ocd-textarea" rows="2" data-resource-note="' + escapeHtml(row.resource) + '" data-predicate-iri="' + escapeHtml(COMMON_NAMESPACE_IRIS.iao.curatorNote) + '"></textarea>';
   html += '</label>';
   html += '<div class="ocd-filter ocd-filter-span-2">';
   html += '<label class="ocd-checkbox">';
-  html += '<input type="checkbox" data-resource-deprecate-toggle="' + escapeHtml(row.resource) + '" data-deprecated-predicate-iri="' + escapeHtml(NS.owl.deprecated) + '" />';
+  html += '<input type="checkbox" data-resource-deprecate-toggle="' + escapeHtml(row.resource) + '" data-deprecated-predicate-iri="' + escapeHtml(COMMON_NAMESPACE_IRIS.owl.deprecated) + '" />';
   html += '<span><strong>Deprecate?</strong> Stage <span class="ocd-mono">owl:deprecated true</span> and optional replacement details.</span>';
   html += '</label>';
   html += '<div class="ocd-resource-deprecate-fields">';
   html += '<label class="ocd-filter">';
   html += '<span class="ocd-label">Obsolescence reason</span>';
-  html += '<textarea class="ocd-input ocd-textarea" rows="2" data-resource-note="' + escapeHtml(row.resource) + '" data-predicate-iri="' + escapeHtml(NS.iao.obsolescenceReason) + '"></textarea>';
+  html += '<textarea class="ocd-input ocd-textarea" rows="2" data-resource-note="' + escapeHtml(row.resource) + '" data-predicate-iri="' + escapeHtml(COMMON_NAMESPACE_IRIS.iao.obsolescenceReason) + '"></textarea>';
   html += '</label>';
   html += '<label class="ocd-filter">';
   html += '<span class="ocd-label">Term replaced by</span>';
-  html += '<input class="ocd-input ocd-mono" type="text" data-resource-note="' + escapeHtml(row.resource) + '" data-predicate-iri="' + escapeHtml(NS.iao.termReplacedBy) + '" placeholder="IRI" />';
+  html += '<input class="ocd-input ocd-mono" type="text" data-resource-note="' + escapeHtml(row.resource) + '" data-predicate-iri="' + escapeHtml(COMMON_NAMESPACE_IRIS.iao.termReplacedBy) + '" placeholder="IRI" />';
   html += '</label>';
   html += '</div>';
   html += '</div>';
@@ -304,7 +303,7 @@ function renderResourceEditor(row) {
   html += '</label>';
   html += '<label class="ocd-filter">';
   html += '<span class="ocd-label">Literal datatype IRI</span>';
-  html += '<input class="ocd-input ocd-mono" type="text" data-arbitrary-object-datatype="' + escapeHtml(row.resource) + '" placeholder="' + escapeHtml(NS.xsd.string) + '" />';
+  html += '<input class="ocd-input ocd-mono" type="text" data-arbitrary-object-datatype="' + escapeHtml(row.resource) + '" placeholder="' + escapeHtml(COMMON_NAMESPACE_IRIS.xsd.string) + '" />';
   html += '</label>';
   html += '</div>';
   html += '</details>';

@@ -19,7 +19,6 @@ import { COMMON_NAMESPACE_IRIS } from './shared/namespace-registry/namespace-reg
 /** @typedef {import('./types.js').InspectionScope} InspectionScope */
 /** @typedef {import('./types.js').QueryResultRow} QueryResultRow */
 
-const NS = COMMON_NAMESPACE_IRIS;
 
 /**
  * @typedef {Object} InspectProgress
@@ -74,7 +73,7 @@ export function buildInspectionItem(input) {
     const resourceDetail = resourceDetails?.[row.resource];
     const statusAssertion = Array.isArray(resourceDetail?.outgoingAssertions)
       ? resourceDetail.outgoingAssertions.find(
-        (assertion) => assertion.predicateIri === NS.iao.curationStatus
+        (assertion) => assertion.predicateIri === COMMON_NAMESPACE_IRIS.iao.curationStatus
       )
       : null;
 

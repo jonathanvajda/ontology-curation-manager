@@ -102,12 +102,12 @@ describe('engine ownership helpers', () => {
     const lookupStore = new N3.Store(primaryStore.getQuads(null, null, null, null));
     lookupStore.addQuad(
       namedNode('http://example.org/import/B'),
-      namedNode('http://www.w3.org/2000/01/rdf-schema#label'),
+      namedNode(COMMON_NAMESPACE_IRIS.rdfs.label),
       literal('Imported B')
     );
     lookupStore.addQuad(
       namedNode('http://example.org/import/B'),
-      namedNode(COMMON_NAMESPACE_IRIS.cco.curatedIn),
+      namedNode(COMMON_NAMESPACE_IRIS.cceo.curatedIn),
       namedNode('http://example.org/import/ontology')
     );
 
@@ -125,7 +125,7 @@ describe('engine ownership helpers', () => {
         reasons: ['external-subject']
       }),
       expect.objectContaining({
-        iri: 'http://www.w3.org/2000/01/rdf-schema#subClassOf',
+        iri: COMMON_NAMESPACE_IRIS.rdfs.subClassOf,
         reasons: ['predicate']
       })
     ]));

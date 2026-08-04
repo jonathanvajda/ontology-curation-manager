@@ -25,7 +25,6 @@ import {
  * @property {string} explanation
  */
 
-const NS = COMMON_NAMESPACE_IRIS;
 const STANDARD_PREFIXES = namespacePrefixMapFromRegistry();
 const BUILT_IN_SIGNATURE_NAMESPACES = Object.freeze([
   STANDARD_PREFIXES.rdf,
@@ -37,14 +36,14 @@ const BUILT_IN_SIGNATURE_NAMESPACES = Object.freeze([
 
 /** @type {ReadonlySet<string>} */
 const DECLARATION_TYPES = Object.freeze(new Set([
-  NS.owl.Class,
-  NS.owl.ObjectProperty,
-  NS.owl.DatatypeProperty,
-  NS.owl.AnnotationProperty,
-  NS.owl.NamedIndividual,
-  NS.owl.Ontology,
-  NS.rdfs.Datatype,
-  NS.owl.Datatype
+  COMMON_NAMESPACE_IRIS.owl.Class,
+  COMMON_NAMESPACE_IRIS.owl.ObjectProperty,
+  COMMON_NAMESPACE_IRIS.owl.DatatypeProperty,
+  COMMON_NAMESPACE_IRIS.owl.AnnotationProperty,
+  COMMON_NAMESPACE_IRIS.owl.NamedIndividual,
+  COMMON_NAMESPACE_IRIS.owl.Ontology,
+  COMMON_NAMESPACE_IRIS.rdfs.Datatype,
+  COMMON_NAMESPACE_IRIS.owl.Datatype
 ]));
 
 /**
@@ -117,7 +116,7 @@ function collectSignatureEntities(store) {
  */
 function collectDeclaredEntities(store) {
   const declared = new Set();
-  const quads = store?.getQuads ? store.getQuads(null, NS.rdf.type, null, null) : [];
+  const quads = store?.getQuads ? store.getQuads(null, COMMON_NAMESPACE_IRIS.rdf.type, null, null) : [];
 
   for (const quad of quads) {
     const objectIri = String(quad?.object?.value || '');
@@ -170,7 +169,7 @@ function deriveExpressivityLabel(constructSet, quads) {
       .map((quad) => String(quad.predicate.value))
   );
 
-  if (predicateSet.has(NS.rdfs.subPropertyOf) || predicateSet.has(NS.owl.inverseOf)) {
+  if (predicateSet.has(COMMON_NAMESPACE_IRIS.rdfs.subPropertyOf) || predicateSet.has(COMMON_NAMESPACE_IRIS.owl.inverseOf)) {
     label += 'H';
   }
   for (const construct of ['U', 'C', 'E', 'A', 'H', 'N']) {
@@ -255,7 +254,7 @@ function isAboxQuad(quad, classSet, individualSet) {
   const predicateIri = String(quad?.predicate?.value || '');
   const objectIri = quad?.object?.termType === 'NamedNode' ? String(quad.object.value || '') : '';
 
-  if (predicateIri === NS.rdf.type && classSet.has(objectIri) && !classSet.has(subjectIri)) {
+  if (predicateIri === COMMON_NAMESPACE_IRIS.rdf.type && classSet.has(objectIri) && !classSet.has(subjectIri)) {
     return true;
   }
 
@@ -284,9 +283,9 @@ function isRboxQuad(quad, objectPropertySet, datatypePropertySet, annotationProp
   }
 
   return (
-    predicateIri === NS.rdfs.domain ||
-    predicateIri === NS.rdfs.range ||
-    predicateIri === NS.owl.inverseOf
+    predicateIri === COMMON_NAMESPACE_IRIS.rdfs.domain ||
+    predicateIri === COMMON_NAMESPACE_IRIS.rdfs.range ||
+    predicateIri === COMMON_NAMESPACE_IRIS.owl.inverseOf
   );
 }
 
@@ -303,27 +302,27 @@ export function computeBasicMeasures(store, options = {}) {
   const syntax = getSyntaxLabel(options.sourceFormat || null);
 
   const classSet = new Set(
-    (store?.getQuads ? store.getQuads(null, NS.rdf.type, NS.owl.Class, null) : [])
+    (store?.getQuads ? store.getQuads(null, COMMON_NAMESPACE_IRIS.rdf.type, COMMON_NAMESPACE_IRIS.owl.Class, null) : [])
       .filter((quad) => quad?.subject?.termType === 'NamedNode' && quad.subject.value)
       .map((quad) => String(quad.subject.value))
   );
   const objectPropertySet = new Set(
-    (store?.getQuads ? store.getQuads(null, NS.rdf.type, NS.owl.ObjectProperty, null) : [])
+    (store?.getQuads ? store.getQuads(null, COMMON_NAMESPACE_IRIS.rdf.type, COMMON_NAMESPACE_IRIS.owl.ObjectProperty, null) : [])
       .filter((quad) => quad?.subject?.termType === 'NamedNode' && quad.subject.value)
       .map((quad) => String(quad.subject.value))
   );
   const datatypePropertySet = new Set(
-    (store?.getQuads ? store.getQuads(null, NS.rdf.type, NS.owl.DatatypeProperty, null) : [])
+    (store?.getQuads ? store.getQuads(null, COMMON_NAMESPACE_IRIS.rdf.type, COMMON_NAMESPACE_IRIS.owl.DatatypeProperty, null) : [])
       .filter((quad) => quad?.subject?.termType === 'NamedNode' && quad.subject.value)
       .map((quad) => String(quad.subject.value))
   );
   const annotationPropertySet = new Set(
-    (store?.getQuads ? store.getQuads(null, NS.rdf.type, NS.owl.AnnotationProperty, null) : [])
+    (store?.getQuads ? store.getQuads(null, COMMON_NAMESPACE_IRIS.rdf.type, COMMON_NAMESPACE_IRIS.owl.AnnotationProperty, null) : [])
       .filter((quad) => quad?.subject?.termType === 'NamedNode' && quad.subject.value)
       .map((quad) => String(quad.subject.value))
   );
   const individualSet = new Set(
-    (store?.getQuads ? store.getQuads(null, NS.rdf.type, NS.owl.NamedIndividual, null) : [])
+    (store?.getQuads ? store.getQuads(null, COMMON_NAMESPACE_IRIS.rdf.type, COMMON_NAMESPACE_IRIS.owl.NamedIndividual, null) : [])
       .filter((quad) => quad?.subject?.termType === 'NamedNode' && quad.subject.value)
       .map((quad) => String(quad.subject.value))
   );
@@ -332,7 +331,7 @@ export function computeBasicMeasures(store, options = {}) {
   const classToSuperclasses = new Map();
   /** @type {Map<string, Set<string>>} */
   const classToSubclasses = new Map();
-  for (const quad of store?.getQuads ? store.getQuads(null, NS.rdfs.subClassOf, null, null) : []) {
+  for (const quad of store?.getQuads ? store.getQuads(null, COMMON_NAMESPACE_IRIS.rdfs.subClassOf, null, null) : []) {
     if (quad?.subject?.termType !== 'NamedNode' || quad?.object?.termType !== 'NamedNode') {
       continue;
     }
@@ -350,7 +349,7 @@ export function computeBasicMeasures(store, options = {}) {
 
   /** @type {Map<string, Set<string>>} */
   const classToInstances = new Map();
-  for (const quad of store?.getQuads ? store.getQuads(null, NS.rdf.type, null, null) : []) {
+  for (const quad of store?.getQuads ? store.getQuads(null, COMMON_NAMESPACE_IRIS.rdf.type, null, null) : []) {
     if (quad?.subject?.termType !== 'NamedNode' || quad?.object?.termType !== 'NamedNode') {
       continue;
     }
@@ -368,13 +367,13 @@ export function computeBasicMeasures(store, options = {}) {
   const ontologyAnnotationCount = (store?.getQuads ? store.getQuads(ontologyIri, null, null, null) : [])
     .filter((quad) => {
       const predicateIri = String(quad?.predicate?.value || '');
-      return predicateIri !== NS.rdf.type &&
-        predicateIri !== NS.owl.imports &&
-        predicateIri !== NS.owl.versionIRI;
+      return predicateIri !== COMMON_NAMESPACE_IRIS.rdf.type &&
+        predicateIri !== COMMON_NAMESPACE_IRIS.owl.imports &&
+        predicateIri !== COMMON_NAMESPACE_IRIS.owl.versionIRI;
     })
     .length;
-  const directImportCount = store?.getQuads ? store.getQuads(ontologyIri, NS.owl.imports, null, null).length : 0;
-  const deprecatedTermCount = (store?.getQuads ? store.getQuads(null, NS.owl.deprecated, null, null) : [])
+  const directImportCount = store?.getQuads ? store.getQuads(ontologyIri, COMMON_NAMESPACE_IRIS.owl.imports, null, null).length : 0;
+  const deprecatedTermCount = (store?.getQuads ? store.getQuads(null, COMMON_NAMESPACE_IRIS.owl.deprecated, null, null) : [])
     .filter((quad) => {
       if (quad?.subject?.termType !== 'NamedNode') {
         return false;
@@ -382,7 +381,7 @@ export function computeBasicMeasures(store, options = {}) {
       if (quad?.object?.termType === 'Literal') {
         const value = String(quad.object.value || '').toLowerCase();
         const datatypeIri = String(quad?.object?.datatype?.value || '');
-        return value === 'true' && (!datatypeIri || datatypeIri === NS.xsd.boolean);
+        return value === 'true' && (!datatypeIri || datatypeIri === COMMON_NAMESPACE_IRIS.xsd.boolean);
       }
       return String(quad?.object?.value || '').toLowerCase() === 'true';
     })
@@ -411,28 +410,28 @@ export function computeBasicMeasures(store, options = {}) {
       incrementMetricMap(classFrequency, String(quad.object.value || ''));
     }
     const predicateIri = String(quad?.predicate?.value || '');
-    if (predicateIri === NS.owl.intersectionOf) {
+    if (predicateIri === COMMON_NAMESPACE_IRIS.owl.intersectionOf) {
       constructSet.add('AL');
     }
-    if (predicateIri === NS.owl.unionOf) {
+    if (predicateIri === COMMON_NAMESPACE_IRIS.owl.unionOf) {
       constructSet.add('U');
     }
-    if (predicateIri === NS.owl.complementOf) {
+    if (predicateIri === COMMON_NAMESPACE_IRIS.owl.complementOf) {
       constructSet.add('C');
     }
-    if (predicateIri === NS.owl.someValuesFrom) {
+    if (predicateIri === COMMON_NAMESPACE_IRIS.owl.someValuesFrom) {
       constructSet.add('E');
     }
-    if (predicateIri === NS.owl.allValuesFrom) {
+    if (predicateIri === COMMON_NAMESPACE_IRIS.owl.allValuesFrom) {
       constructSet.add('A');
     }
-    if (predicateIri === NS.owl.hasValue) {
+    if (predicateIri === COMMON_NAMESPACE_IRIS.owl.hasValue) {
       constructSet.add('H');
     }
     if (
-      predicateIri === NS.owl.minCardinality ||
-      predicateIri === NS.owl.maxCardinality ||
-      predicateIri === NS.owl.cardinality
+      predicateIri === COMMON_NAMESPACE_IRIS.owl.minCardinality ||
+      predicateIri === COMMON_NAMESPACE_IRIS.owl.maxCardinality ||
+      predicateIri === COMMON_NAMESPACE_IRIS.owl.cardinality
     ) {
       constructSet.add('N');
     }
@@ -487,7 +486,7 @@ export function computeBasicMeasures(store, options = {}) {
     annotationPropertySet
   )).length;
   const tboxAxiomCount = quads.length - aboxAxiomCount - rboxAxiomCount;
-  const ruleCount = (store?.getQuads ? store.getQuads(null, NS.rdf.type, NS.swrl.Imp, null) : [])
+  const ruleCount = (store?.getQuads ? store.getQuads(null, COMMON_NAMESPACE_IRIS.rdf.type, COMMON_NAMESPACE_IRIS.swrl.Imp, null) : [])
     .filter((quad) => quad?.subject?.termType === 'NamedNode' && quad.subject.value)
     .length;
 
@@ -498,12 +497,12 @@ export function computeBasicMeasures(store, options = {}) {
     const predicateIri = String(quad?.predicate?.value || '');
     const objectIri = quad?.object?.termType === 'NamedNode' ? String(quad.object.value || '') : '';
 
-    if (predicateIri === NS.rdf.type) {
+    if (predicateIri === COMMON_NAMESPACE_IRIS.rdf.type) {
       if (DECLARATION_TYPES.has(objectIri)) {
         incrementMetricMap(axiomTypeCounts, 'Declaration');
       } else if (classSet.has(objectIri)) {
         incrementMetricMap(axiomTypeCounts, 'ClassAssertion');
-      } else if (objectIri === NS.swrl.Imp) {
+      } else if (objectIri === COMMON_NAMESPACE_IRIS.swrl.Imp) {
         incrementMetricMap(axiomTypeCounts, 'Rule');
       } else if (subjectIri && objectIri) {
         incrementMetricMap(axiomTypeCounts, 'TypeAssertion');
@@ -511,27 +510,27 @@ export function computeBasicMeasures(store, options = {}) {
       continue;
     }
 
-    if (predicateIri === NS.rdfs.subClassOf) {
+    if (predicateIri === COMMON_NAMESPACE_IRIS.rdfs.subClassOf) {
       incrementMetricMap(axiomTypeCounts, 'SubClassOf');
       continue;
     }
-    if (predicateIri === NS.rdfs.subPropertyOf) {
+    if (predicateIri === COMMON_NAMESPACE_IRIS.rdfs.subPropertyOf) {
       incrementMetricMap(axiomTypeCounts, 'SubPropertyOf');
       continue;
     }
-    if (predicateIri === NS.rdfs.domain) {
+    if (predicateIri === COMMON_NAMESPACE_IRIS.rdfs.domain) {
       incrementMetricMap(axiomTypeCounts, 'Domain');
       continue;
     }
-    if (predicateIri === NS.rdfs.range) {
+    if (predicateIri === COMMON_NAMESPACE_IRIS.rdfs.range) {
       incrementMetricMap(axiomTypeCounts, 'Range');
       continue;
     }
-    if (predicateIri === NS.owl.equivalentClass) {
+    if (predicateIri === COMMON_NAMESPACE_IRIS.owl.equivalentClass) {
       incrementMetricMap(axiomTypeCounts, 'EquivalentClasses');
       continue;
     }
-    if (predicateIri === NS.owl.disjointWith) {
+    if (predicateIri === COMMON_NAMESPACE_IRIS.owl.disjointWith) {
       incrementMetricMap(axiomTypeCounts, 'DisjointClasses');
       continue;
     }
@@ -564,10 +563,10 @@ export function computeBasicMeasures(store, options = {}) {
       .filter((quad) => quad?.predicate?.termType === 'NamedNode' && quad.predicate.value)
       .map((quad) => String(quad.predicate.value))
   );
-  const gciCount = (store?.getQuads ? store.getQuads(null, NS.rdfs.subClassOf, null, null) : [])
+  const gciCount = (store?.getQuads ? store.getQuads(null, COMMON_NAMESPACE_IRIS.rdfs.subClassOf, null, null) : [])
     .filter((quad) => quad?.subject?.termType !== 'NamedNode')
     .length;
-  const gciHiddenCount = (store?.getQuads ? store.getQuads(null, NS.owl.equivalentClass, null, null) : [])
+  const gciHiddenCount = (store?.getQuads ? store.getQuads(null, COMMON_NAMESPACE_IRIS.owl.equivalentClass, null, null) : [])
     .filter((quad) =>
       quad?.subject?.termType === 'NamedNode' &&
       quad?.object?.termType !== 'NamedNode'
@@ -584,7 +583,7 @@ export function computeBasicMeasures(store, options = {}) {
   const hasAnyOwlNamespaceIri = Array.from(signatureEntities)
     .some((iri) => iri.startsWith(STANDARD_PREFIXES.owl));
   const hasOntologyDeclaration = Boolean(
-    store?.getQuads && store.getQuads(null, NS.rdf.type, NS.owl.Ontology, null).length
+    store?.getQuads && store.getQuads(null, COMMON_NAMESPACE_IRIS.rdf.type, COMMON_NAMESPACE_IRIS.owl.Ontology, null).length
   );
   const hasOwlEntityDeclarations =
     classSet.size > 0 ||
@@ -593,20 +592,20 @@ export function computeBasicMeasures(store, options = {}) {
     annotationPropertySet.size > 0 ||
     individualSet.size > 0;
   const hasCharacteristicOwlPredicates = [
-    NS.owl.equivalentClass,
-    NS.owl.disjointWith,
-    NS.owl.intersectionOf,
-    NS.owl.unionOf,
-    NS.owl.complementOf,
-    NS.owl.someValuesFrom,
-    NS.owl.allValuesFrom,
-    NS.owl.hasValue,
-    NS.owl.minCardinality,
-    NS.owl.maxCardinality,
-    NS.owl.cardinality,
-    NS.owl.inverseOf,
-    NS.owl.imports,
-    NS.owl.versionIRI
+    COMMON_NAMESPACE_IRIS.owl.equivalentClass,
+    COMMON_NAMESPACE_IRIS.owl.disjointWith,
+    COMMON_NAMESPACE_IRIS.owl.intersectionOf,
+    COMMON_NAMESPACE_IRIS.owl.unionOf,
+    COMMON_NAMESPACE_IRIS.owl.complementOf,
+    COMMON_NAMESPACE_IRIS.owl.someValuesFrom,
+    COMMON_NAMESPACE_IRIS.owl.allValuesFrom,
+    COMMON_NAMESPACE_IRIS.owl.hasValue,
+    COMMON_NAMESPACE_IRIS.owl.minCardinality,
+    COMMON_NAMESPACE_IRIS.owl.maxCardinality,
+    COMMON_NAMESPACE_IRIS.owl.cardinality,
+    COMMON_NAMESPACE_IRIS.owl.inverseOf,
+    COMMON_NAMESPACE_IRIS.owl.imports,
+    COMMON_NAMESPACE_IRIS.owl.versionIRI
   ].some((iri) => predicateSet.has(iri));
   const rdfButPossiblyNotOwl =
     !hasAnyOwlNamespaceIri ||
@@ -712,7 +711,7 @@ export function computeBasicMeasures(store, options = {}) {
     addProfileExclusion(profileExclusions, 'possible_owl2_dl_concern', ['annotation/logical property overlap']);
   }
   if (hasRule) {
-    const ruleSubjects = (store?.getQuads ? store.getQuads(null, NS.rdf.type, NS.swrl.Imp, null) : [])
+    const ruleSubjects = (store?.getQuads ? store.getQuads(null, COMMON_NAMESPACE_IRIS.rdf.type, COMMON_NAMESPACE_IRIS.swrl.Imp, null) : [])
       .filter((quad) => quad?.subject?.termType === 'NamedNode' && quad.subject.value)
       .map((quad) => String(quad.subject.value))
       .sort((left, right) => left.localeCompare(right));

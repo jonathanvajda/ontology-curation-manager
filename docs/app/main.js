@@ -67,7 +67,6 @@ import { COMMON_NAMESPACE_IRIS } from './shared/namespace-registry/namespace-reg
 /** @typedef {import('./types.js').SupplementalOntologyFile} SupplementalOntologyFile */
 /** @typedef {import('./types.js').UiStateSnapshot} UiStateSnapshot */
 
-const NS = COMMON_NAMESPACE_IRIS;
 
 /**
  * @typedef {Object} DownloadAction
@@ -1226,31 +1225,31 @@ function stageBulkEdit() {
 
   for (const resourceIri of selectedResources) {
     if (statusValue) {
-      stageReplacement(resourceIri, NS.iao.curationStatus, [{
+      stageReplacement(resourceIri, COMMON_NAMESPACE_IRIS.iao.curationStatus, [{
         termType: 'NamedNode',
         value: statusValue
       }]);
     }
     if (curatorNote) {
-      stageReplacement(resourceIri, NS.iao.curatorNote, [{
+      stageReplacement(resourceIri, COMMON_NAMESPACE_IRIS.iao.curatorNote, [{
         termType: 'Literal',
         value: curatorNote
       }]);
     }
     if (obsolescenceReason) {
-      stageReplacement(resourceIri, NS.iao.obsolescenceReason, [{
+      stageReplacement(resourceIri, COMMON_NAMESPACE_IRIS.iao.obsolescenceReason, [{
         termType: 'Literal',
         value: obsolescenceReason
       }]);
     }
     if (termReplacedBy) {
-      stageReplacement(resourceIri, NS.iao.termReplacedBy, [{
+      stageReplacement(resourceIri, COMMON_NAMESPACE_IRIS.iao.termReplacedBy, [{
         termType: 'NamedNode',
         value: termReplacedBy
       }]);
     }
     if (commentValue) {
-      stageReplacement(resourceIri, NS.rdfs.comment, [{
+      stageReplacement(resourceIri, COMMON_NAMESPACE_IRIS.rdfs.comment, [{
         termType: 'Literal',
         value: commentValue
       }]);
@@ -1285,7 +1284,7 @@ function stageSuggestedStatusesForSelection() {
       continue;
     }
 
-    stageReplacement(resourceIri, NS.iao.curationStatus, [{
+    stageReplacement(resourceIri, COMMON_NAMESPACE_IRIS.iao.curationStatus, [{
       termType: 'NamedNode',
       value: row.statusIri
     }]);
@@ -1349,7 +1348,7 @@ function stageResourcePanelEdits(resourceIri) {
 
   let stagedCount = 0;
   if (statusSelect instanceof HTMLSelectElement && statusSelect.value) {
-    stageReplacement(resourceIri, NS.iao.curationStatus, [{
+    stageReplacement(resourceIri, COMMON_NAMESPACE_IRIS.iao.curationStatus, [{
       termType: 'NamedNode',
       value: statusSelect.value
     }]);
@@ -1364,8 +1363,8 @@ function stageResourcePanelEdits(resourceIri) {
     const predicateIri = input.getAttribute('data-predicate-iri') || '';
     const value = String(input.value || '').trim();
     const isDeprecationOnlyField =
-      predicateIri === NS.iao.obsolescenceReason ||
-      predicateIri === NS.iao.termReplacedBy;
+      predicateIri === COMMON_NAMESPACE_IRIS.iao.obsolescenceReason ||
+      predicateIri === COMMON_NAMESPACE_IRIS.iao.termReplacedBy;
 
     if (
       isDeprecationOnlyField &&
@@ -1379,17 +1378,17 @@ function stageResourcePanelEdits(resourceIri) {
     }
 
     stageReplacement(resourceIri, predicateIri, [{
-      termType: predicateIri === NS.iao.termReplacedBy ? 'NamedNode' : 'Literal',
+      termType: predicateIri === COMMON_NAMESPACE_IRIS.iao.termReplacedBy ? 'NamedNode' : 'Literal',
       value
     }]);
     stagedCount += 1;
   }
 
   if (deprecateToggle instanceof HTMLInputElement && deprecateToggle.checked) {
-    stageReplacement(resourceIri, NS.owl.deprecated, [{
+    stageReplacement(resourceIri, COMMON_NAMESPACE_IRIS.owl.deprecated, [{
       termType: 'Literal',
       value: 'true',
-      datatypeIri: NS.xsd.boolean
+      datatypeIri: COMMON_NAMESPACE_IRIS.xsd.boolean
     }]);
     stagedCount += 1;
   }
@@ -1447,7 +1446,7 @@ function stageOntologyEdits(ontologyIri) {
     }
 
     stageReplacement(ontologyIri, predicateIri, [{
-      termType: predicateIri === NS.iao.termReplacedBy ? 'NamedNode' : 'Literal',
+      termType: predicateIri === COMMON_NAMESPACE_IRIS.iao.termReplacedBy ? 'NamedNode' : 'Literal',
       value
     }]);
     stagedCount += 1;
