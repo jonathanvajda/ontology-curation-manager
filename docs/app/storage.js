@@ -14,6 +14,7 @@ import {
   ensureProjectPortfolioProject,
   openProjectPortfolioDatabase
 } from './shared/indexeddb-data-management/index.js';
+import { createUuid } from './shared/ontology-utils/index.js';
 
 /** @typedef {import('./types.js').RunKind} RunKind */
 /** @typedef {import('./types.js').SaveRunInput} SaveRunInput */
@@ -50,8 +51,7 @@ function nowIso() {
  * @returns {string}
  */
 function makeRunId(prefix) {
-  const randomSuffix = Math.random().toString(16).slice(2);
-  return `${prefix}_${Date.now()}_${randomSuffix}`;
+  return `${prefix}_${createUuid()}`;
 }
 
 /**

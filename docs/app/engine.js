@@ -36,6 +36,11 @@ import {
   namespacePrefixMapFromRegistry
 } from './shared/namespace-registry/namespace-registry.js';
 import {
+  classifyOntologyInput,
+  isBlankNodeTerm,
+  isIriInNamespace
+} from './shared/ontology-utils/index.js';
+import {
   getCurationStatusLabel,
   getCurationStatusRank
 } from './grader.js';
@@ -238,8 +243,8 @@ export function assertSupportedOntologyFile(fileName) {
     return;
   }
 
-  const detected = getSupportedMimeTypeForFilename(fileName);
-  if (!detected?.ok || detected.value.category !== 'rdf') {
+  const classification = classifyOntologyInput({ filename: fileName });
+  if (!classification.isOntologyCandidate) {
     throw new Error(
       'Unsupported ontology file type. Supported inputs are Turtle, N-Triples, N-Quads, TriG, N3, JSON-LD, and RDF/XML.'
     );
@@ -715,7 +720,7 @@ function toAssertionObject(store, predicateIri, term) {
       displayValue: getNamedNodeDisplayValue(store, value, predicateIri)
     };
   }
-  if (termType === 'BlankNode') {
+  if (isBlankNodeTerm(term)) {
     const value = String(term?.value || '');
     return {
       termType: 'BlankNode',
@@ -1029,7 +1034,7 @@ function getDependencyCuratedInValue(lookupStore, iri, cceoFallbackPredicates = 
  * @returns {boolean}
  */
 function isInOntologyNamespace(iri, ontologyNamespace) {
-  return !!ontologyNamespace && iri.startsWith(ontologyNamespace);
+  return isIriInNamespace(iri, ontologyNamespace);
 }
 
 /**

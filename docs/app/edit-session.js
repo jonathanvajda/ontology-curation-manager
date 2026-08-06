@@ -7,6 +7,7 @@ import {
   serializeOntologyStore
 } from './engine.js';
 import { COMMON_NAMESPACE_IRIS } from './shared/namespace-registry/namespace-registry.js';
+import { createUuid } from './shared/ontology-utils/index.js';
 
 /** @typedef {'text/turtle' | 'application/n-triples' | 'application/n-quads' | 'application/trig' | 'text/n3' | 'application/ld+json' | 'application/rdf+xml'} RdfFormat */
 /** @typedef {import('./types.js').EditableObjectValue} EditableObjectValue */
@@ -325,5 +326,5 @@ export async function exportPrimaryOntology(primaryOntology, format) {
  * @returns {string}
  */
 export function createStagedEditId() {
-  return `edit-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  return `edit-${createUuid()}`;
 }
