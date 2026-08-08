@@ -197,6 +197,32 @@ export async function getLastRunId() {
 }
 
 /**
+ * Persists one OCD project-scoped setting value in the shared portfolio DB.
+ *
+ * @param {string} key
+ * @param {unknown} value
+ * @returns {Promise<unknown>}
+ */
+export async function writeProjectSettingValue(key, value) {
+  const stores = await openOcdStores();
+  await stores.settings.writeSettingValue(key, value);
+  return value;
+}
+
+/**
+ * Reads one OCD project-scoped setting value from the shared portfolio DB.
+ *
+ * @template T
+ * @param {string} key
+ * @param {T} fallbackValue
+ * @returns {Promise<T | unknown>}
+ */
+export async function readProjectSettingValue(key, fallbackValue = null) {
+  const stores = await openOcdStores();
+  return stores.settings.readSettingValue(key, fallbackValue);
+}
+
+/**
  * Persists the OCD theme as an app/user setting.
  *
  * @param {'ocd-theme-light' | 'ocd-theme-dark'} themeClass
