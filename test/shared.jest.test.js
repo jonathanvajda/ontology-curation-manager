@@ -2,9 +2,9 @@ import { describe, expect, test } from '@jest/globals';
 import {
   cssEscapeAttr,
   escapeHtml,
-  getReportStandards,
-  safeFilePart
+  getReportStandards
 } from '../docs/app/shared.js';
+import { normalizeStringToAsciiSlug } from '../docs/app/shared/normalization-utils/index.js';
 import { escapeDelimitedCell, serializeDelimitedRows } from '../docs/app/shared/tabular-io/index.js';
 
 describe('shared helpers', () => {
@@ -16,8 +16,8 @@ describe('shared helpers', () => {
     expect(cssEscapeAttr('a"b')).toBe('a\\"b');
   });
 
-  test('safeFilePart normalizes unsafe file-name fragments', () => {
-    expect(safeFilePart('  ontology report: v1/owl  ')).toBe('ontology_report_v1_owl');
+  test('promoted ASCII slug normalizer covers legacy file-name fragments', () => {
+    expect(normalizeStringToAsciiSlug('  ontology report: v1/owl  ', { separator: '_' })).toBe('ontology_report_v1_owl');
   });
 
   test('shared tabular-io CSV helpers preserve commas, quotes, and newlines', () => {

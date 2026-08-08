@@ -5,7 +5,10 @@ import { parseOntologyInput, serializeOntologyStore } from './engine.js';
 import { createAcceptAttribute, downloadTextFile } from './shared/browser-file-io/index.js';
 import { SUPPORTED_MIME_DESCRIPTORS } from './shared/format-registry/index.js';
 import { selectProjectFolder } from './shared/indexeddb-data-management/index.js';
-import { getTimestampForFileName, safeFilePart } from './shared.js';
+import {
+  getTimestampForFilename,
+  normalizeStringToAsciiSlug
+} from './shared/normalization-utils/index.js';
 import { checkTextFieldWithNlpQa, DEFAULT_NLP_QA_CHECK_MODES, normalizeNlpQaCheckModes } from './nlp-qa-model.js';
 import {
   buildNlpQaOntologyLexicon,
@@ -295,8 +298,8 @@ async function downloadCurrentNlpQaOntologyAsTurtle() {
       prefixes: parsedOntology.prefixes,
       baseIri: parsedOntology.baseIri
     });
-    const stem = safeFilePart((currentFileName || 'ontology').replace(/\.[^.]+$/, '')) || 'ontology';
-    downloadTextFile(`${stem}_nlp-qa_${getTimestampForFileName()}.ttl`, text, {
+    const stem = normalizeStringToAsciiSlug((currentFileName || 'ontology').replace(/\.[^.]+$/, ''), { separator: '_' }) || 'ontology';
+    downloadTextFile(`${stem}_nlp-qa_${getTimestampForFilename()}.ttl`, text, {
       mimeType: 'text/turtle;charset=utf-8'
     });
     renderNlpQaStatusMessage('Downloaded Turtle export using the existing RDF serializer.');

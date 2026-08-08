@@ -15,10 +15,12 @@ import { saveRun, listRuns, getRun, deleteRun, getLastRunId, readThemePreference
 import { populateStandardFilter } from './criteria.js';
 import {
   escapeHtml,
-  cssEscapeAttr,
-  getTimestampForFileName,
-  safeFilePart
+  cssEscapeAttr
 } from './shared.js';
+import {
+  getTimestampForFilename,
+  normalizeStringToAsciiSlug
+} from './shared/normalization-utils/index.js';
 import { renderOntologyReport } from './render-ontology.js';
 import { renderDashboard, getBatchKey } from './render-dashboard.js';
 import {
@@ -1624,10 +1626,11 @@ async function exportEditedOntology() {
 
   try {
     const serialized = await exportPrimaryOntology(editedPrimary, /** @type {any} */ (targetFormat));
-    const fileStem = safeFilePart(
-      editedPrimary.fileName.replace(/\.[^.]+$/, '') || 'ontology'
+    const fileStem = normalizeStringToAsciiSlug(
+      editedPrimary.fileName.replace(/\.[^.]+$/, '') || 'ontology',
+      { separator: '_' }
     ) || 'ontology';
-    const fileName = `${fileStem}_edited_${getTimestampForFileName()}${getFileExtensionForFormat(targetFormat)}`;
+    const fileName = `${fileStem}_edited_${getTimestampForFilename()}${getFileExtensionForFormat(targetFormat)}`;
     downloadTextFile(fileName, serialized, { mimeType: targetFormat });
     setStatus(`Exported edited ontology as ${fileName}.`);
   } catch (error) {
@@ -1861,14 +1864,14 @@ const downloadActions = {
     label: 'Results CSV',
     isAvailable: () => Array.isArray(lastResults) && lastResults.length > 0,
     build: () => buildResultsCsv(lastResults, lastOntologyReport?.ontologyIri || ''),
-    getFileName: () => `ocd-results_${getTimestampForFileName()}.csv`,
+    getFileName: () => `ocd-results_${getTimestampForFilename()}.csv`,
     mimeType: 'text/csv;charset=utf-8'
   },
   ontologyYaml: {
     label: 'Ontology Report YAML',
     isAvailable: () => !!lastOntologyReport,
     build: () => buildOntologyReportYaml(lastOntologyReport),
-    getFileName: () => `ocd-ontology-report_${getTimestampForFileName()}.yaml`,
+    getFileName: () => `ocd-ontology-report_${getTimestampForFilename()}.yaml`,
     mimeType: 'text/yaml;charset=utf-8'
   },
   htmlReport: {
@@ -1876,14 +1879,14 @@ const downloadActions = {
     isAvailable: () =>
       !!lastOntologyReport || (Array.isArray(lastResults) && lastResults.length > 0),
     build: () => buildHtmlReport(getExportState()),
-    getFileName: () => `ocd-report_${getTimestampForFileName()}.html`,
+    getFileName: () => `ocd-report_${getTimestampForFilename()}.html`,
     mimeType: 'text/html;charset=utf-8'
   },
   filteredResourcesCsv: {
     label: 'Filtered Resources CSV',
     isAvailable: () => Array.isArray(lastPerResource) && lastPerResource.length > 0,
     build: () => buildFilteredResourcesCsv(lastPerResource),
-    getFileName: () => `ocd-filtered-resources_${getTimestampForFileName()}.csv`,
+    getFileName: () => `ocd-filtered-resources_${getTimestampForFilename()}.csv`,
     mimeType: 'text/csv;charset=utf-8'
   },
   standardDetailCsv: {
@@ -1894,14 +1897,14 @@ const downloadActions = {
       lastResults.length > 0,
     build: () => buildStandardDetailCsv(lastSelectedCriterionId, lastResults),
     getFileName: () =>
-      `ocd-standard-detail_${safeFilePart(lastSelectedCriterionId || 'standard')}_${getTimestampForFileName()}.csv`,
+      `ocd-standard-detail_${normalizeStringToAsciiSlug(lastSelectedCriterionId || 'standard', { separator: '_' })}_${getTimestampForFilename()}.csv`,
     mimeType: 'text/csv;charset=utf-8'
   },
   batchSummaryCsv: {
     label: 'Batch Summary CSV',
     isAvailable: () => Array.isArray(lastBatchReports) && lastBatchReports.length > 0,
     build: () => buildBatchSummaryCsv(lastBatchReports),
-    getFileName: () => `ocd-batch-summary_${getTimestampForFileName()}.csv`,
+    getFileName: () => `ocd-batch-summary_${getTimestampForFilename()}.csv`,
     mimeType: 'text/csv;charset=utf-8'
   }
 };

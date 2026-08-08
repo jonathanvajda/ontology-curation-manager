@@ -34,35 +34,6 @@ export function cssEscapeAttr(value) {
 }
 
 /**
- * Returns a safe file-name fragment.
- *
- * @param {unknown} value
- * @returns {string}
- */
-export function safeFilePart(value) {
-  return String(value == null ? '' : value)
-    .trim()
-    .replace(/[^\w.-]+/g, '_')
-    .replace(/^_+|_+$/g, '');
-}
-
-/**
- * Returns a timestamp suitable for file names.
- *
- * @returns {string}
- */
-export function getTimestampForFileName() {
-  const date = new Date();
-  const yyyy = date.getFullYear();
-  const mm = String(date.getMonth() + 1).padStart(2, '0');
-  const dd = String(date.getDate()).padStart(2, '0');
-  const hh = String(date.getHours()).padStart(2, '0');
-  const mi = String(date.getMinutes()).padStart(2, '0');
-  const ss = String(date.getSeconds()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}_${hh}-${mi}-${ss}`;
-}
-
-/**
  * Returns the standards array from an ontology report.
  *
  * @param {OntologyReport | null | undefined} report
