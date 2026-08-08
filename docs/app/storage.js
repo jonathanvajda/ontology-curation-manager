@@ -10,11 +10,13 @@
 
 import {
   DEFAULT_PROJECT_PORTFOLIO_PROJECT_ID,
+  PROJECT_RECORD_JSONLD_CONTEXT,
   createProjectPortfolioStores,
   ensureProjectPortfolioProject,
   openProjectPortfolioDatabase
 } from './shared/indexeddb-data-management/index.js';
 import { createUuid } from './shared/ontology-utils/index.js';
+import { COMMON_NAMESPACE_IRIS } from './shared/namespace-registry/index.js';
 
 /** @typedef {import('./types.js').RunKind} RunKind */
 /** @typedef {import('./types.js').SaveRunInput} SaveRunInput */
@@ -45,6 +47,44 @@ function nowIso() {
 }
 
 /**
+ * Creates a JSON-LD string literal.
+ *
+ * @param {unknown} value
+ * @returns {object}
+ */
+function createJsonLdStringLiteral(value) {
+  return { '@value': String(value ?? ''), '@type': COMMON_NAMESPACE_IRIS.xsd.string };
+}
+
+/**
+ * Creates a JSON-LD dateTime literal.
+ *
+ * @param {string} value
+ * @returns {object}
+ */
+function createJsonLdDateTimeLiteral(value) {
+  return { '@value': value, '@type': COMMON_NAMESPACE_IRIS.xsd.dateTime };
+}
+
+/**
+ * Reads a scalar value from a JSON-LD property using full IRI keys.
+ *
+ * @param {object} record
+ * @param {string} key
+ * @returns {unknown}
+ */
+function readJsonLdScalarValueForIri(record, key) {
+  const value = record?.[key];
+  if (value && typeof value === 'object' && !Array.isArray(value) && '@value' in value) {
+    return value['@value'];
+  }
+  if (value && typeof value === 'object' && !Array.isArray(value) && '@id' in value) {
+    return value['@id'];
+  }
+  return value;
+}
+
+/**
  * Creates a reasonably unique id for a persisted run.
  *
  * @param {RunKind} prefix
@@ -52,6 +92,65 @@ function nowIso() {
  */
 function makeRunId(prefix) {
   return `${prefix}_${createUuid()}`;
+}
+
+/**
+ * Converts the app-facing saved run DTO into a JSON-LD persisted envelope.
+ *
+ * The diagnostic report payload itself is preserved under `okea:payload`; the
+ * run metadata envelope uses shared ontology-backed keys.
+ *
+ * @param {SavedRun} run
+ * @returns {object}
+ */
+export function convertSavedDiagnosticRunToJsonLd(run) {
+  return {
+    '@context': PROJECT_RECORD_JSONLD_CONTEXT,
+    '@id': run.id,
+    '@type': COMMON_NAMESPACE_IRIS.cceo.ComputerProgramExecution,
+    [COMMON_NAMESPACE_IRIS.dcterms.identifier]: createJsonLdStringLiteral(run.id),
+    [COMMON_NAMESPACE_IRIS.okea.runKind]: run.kind,
+    [COMMON_NAMESPACE_IRIS.dcterms.title]: run.label,
+    [COMMON_NAMESPACE_IRIS.dcterms.created]: createJsonLdDateTimeLiteral(run.createdAt),
+    [COMMON_NAMESPACE_IRIS.okea.payload]: run.payload,
+    [COMMON_NAMESPACE_IRIS.okea.uiState]: run.uiState,
+    [COMMON_NAMESPACE_IRIS.okea.appId]: OCD_APP_ID
+  };
+}
+
+/**
+ * Reads the app-facing saved run DTO from either the current JSON-LD envelope
+ * or older app-shaped records.
+ *
+ * @param {object|null|undefined} record
+ * @returns {SavedRun|null}
+ */
+export function readSavedDiagnosticRunFromJsonLd(record) {
+  if (!record || typeof record !== 'object') {
+    return null;
+  }
+
+  if ('id' in record && 'kind' in record && 'createdAt' in record && 'payload' in record) {
+    return /** @type {SavedRun} */ (record);
+  }
+
+  const id = String(record['@id'] || readJsonLdScalarValueForIri(record, COMMON_NAMESPACE_IRIS.dcterms.identifier) || '');
+  const kind = readJsonLdScalarValueForIri(record, COMMON_NAMESPACE_IRIS.okea.runKind);
+  const label = readJsonLdScalarValueForIri(record, COMMON_NAMESPACE_IRIS.dcterms.title);
+  const createdAt = readJsonLdScalarValueForIri(record, COMMON_NAMESPACE_IRIS.dcterms.created);
+  const payload = record[COMMON_NAMESPACE_IRIS.okea.payload];
+  if (!id || (kind !== 'single' && kind !== 'batch') || !createdAt || payload == null) {
+    return null;
+  }
+
+  return {
+    id,
+    kind,
+    label: String(label || ''),
+    createdAt: String(createdAt),
+    payload,
+    uiState: record[COMMON_NAMESPACE_IRIS.okea.uiState] || null
+  };
 }
 
 /**
@@ -131,10 +230,11 @@ export async function saveRun(input) {
     runKind: `diagnostic-${kind}`,
     label: run.label || `Diagnostic ${kind}`,
     createdAt: run.createdAt,
-    payload: { ...run, appId: OCD_APP_ID },
+    payload: convertSavedDiagnosticRunToJsonLd(run),
     uiState,
     inputArtifactIds: [],
-    outputArtifactIds: []
+    outputArtifactIds: [],
+    metadata: { [COMMON_NAMESPACE_IRIS.okea.appId]: OCD_APP_ID }
   });
 
   await stores.settings.writeSettingValue(LAST_RUN_SETTING_KEY, run.id);
@@ -154,7 +254,7 @@ export async function listRuns(limit = 50) {
   const records = await stores.runs.listRunRecords({ projectId: OCD_PROJECT_ID });
   return records
     .filter((record) => String(record.runKind || '').startsWith('diagnostic-'))
-    .map((record) => /** @type {SavedRun} */ (record.payload))
+    .map((record) => readSavedDiagnosticRunFromJsonLd(record.payload))
     .filter(Boolean)
     .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))
     .slice(0, normalizedLimit);
@@ -173,7 +273,7 @@ export async function getRun(runId) {
 
   const stores = await openOcdStores();
   const record = await stores.runs.getRunRecord(runId);
-  return record?.payload || null;
+  return readSavedDiagnosticRunFromJsonLd(record?.payload);
 }
 
 /**
