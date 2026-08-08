@@ -63,7 +63,7 @@ describe('nlp qa model', () => {
     const {
       buildNlpQaLexicon,
       checkTextFieldWithNlpQa,
-      getNlpQaSpellingLookupForms
+      deriveNlpQaSpellingLookupForms
     } = await import('../docs/app/nlp-qa-model.js');
     const lexicon = buildNlpQaLexicon({ words: ['bearer', 'role'] });
 
@@ -76,7 +76,7 @@ describe('nlp qa model', () => {
       checkModes: { spelling: true, grammar: false, aristotelian: false }
     });
 
-    expect(getNlpQaSpellingLookupForms("bearer's")).toContain('bearer');
+    expect(deriveNlpQaSpellingLookupForms("bearer's")).toContain('bearer');
     expect(straightPossessive.issues).toHaveLength(0);
     expect(curlyPossessive.issues).toHaveLength(0);
   });

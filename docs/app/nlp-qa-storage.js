@@ -42,23 +42,23 @@ const NLP_QA_REPORT_FORMAT_KEY = 'jsonLd';
  * @property {object} state
  */
 
-function nowIso() {
+function createIsoTimestamp() {
   return new Date().toISOString();
 }
 
-function dateTimeLiteral(value) {
+function createJsonLdDateTimeLiteral(value) {
   return { '@value': value, '@type': COMMON_NAMESPACE_IRIS.xsd.dateTime };
 }
 
-function stringLiteral(value) {
+function createJsonLdStringLiteral(value) {
   return { '@value': String(value ?? ''), '@type': COMMON_NAMESPACE_IRIS.xsd.string };
 }
 
-function booleanLiteral(value) {
+function createJsonLdBooleanLiteral(value) {
   return { '@value': !!value, '@type': COMMON_NAMESPACE_IRIS.xsd.boolean };
 }
 
-function createStateIri(id = `urn:uuid:${createUuid()}`) {
+function createNlpQaStateIri(id = `urn:uuid:${createUuid()}`) {
   return id;
 }
 
@@ -69,21 +69,21 @@ function createStateIri(id = `urn:uuid:${createUuid()}`) {
  * @param {string} updatedAt
  * @returns {object}
  */
-export function convertNlpQaOntologyRowToJsonLd(row, updatedAt = nowIso()) {
+export function convertNlpQaOntologyRowToJsonLd(row, updatedAt = createIsoTimestamp()) {
   const record = {
     '@id': row.iri,
     [COMMON_NAMESPACE_IRIS.rdf.type]: row.type ? { '@id': row.type } : undefined,
-    [COMMON_NAMESPACE_IRIS.rdfs.label]: row.label ? stringLiteral(row.label) : undefined,
-    [COMMON_NAMESPACE_IRIS.skos.prefLabel]: row.prefLabel ? stringLiteral(row.prefLabel) : undefined,
-    [COMMON_NAMESPACE_IRIS.skos.definition]: row.definition ? stringLiteral(row.definition) : undefined,
-    [COMMON_NAMESPACE_IRIS.skos.example]: row.example ? stringLiteral(row.example) : undefined,
-    [COMMON_NAMESPACE_IRIS.skos.scopeNote]: row.scopeNote ? stringLiteral(row.scopeNote) : undefined,
-    [COMMON_NAMESPACE_IRIS.cco2.acronym]: row.acronym ? stringLiteral(row.acronym) : undefined
+    [COMMON_NAMESPACE_IRIS.rdfs.label]: row.label ? createJsonLdStringLiteral(row.label) : undefined,
+    [COMMON_NAMESPACE_IRIS.skos.prefLabel]: row.prefLabel ? createJsonLdStringLiteral(row.prefLabel) : undefined,
+    [COMMON_NAMESPACE_IRIS.skos.definition]: row.definition ? createJsonLdStringLiteral(row.definition) : undefined,
+    [COMMON_NAMESPACE_IRIS.skos.example]: row.example ? createJsonLdStringLiteral(row.example) : undefined,
+    [COMMON_NAMESPACE_IRIS.skos.scopeNote]: row.scopeNote ? createJsonLdStringLiteral(row.scopeNote) : undefined,
+    [COMMON_NAMESPACE_IRIS.cco2.acronym]: row.acronym ? createJsonLdStringLiteral(row.acronym) : undefined
   };
   if (row.modified) {
-    record[COMMON_NAMESPACE_IRIS.dcterms.modified] = dateTimeLiteral(updatedAt);
+    record[COMMON_NAMESPACE_IRIS.dcterms.modified] = createJsonLdDateTimeLiteral(updatedAt);
   }
-  return stripUndefined(record);
+  return stripUndefinedJsonLdProperties(record);
 }
 
 /**
@@ -95,13 +95,13 @@ export function convertNlpQaOntologyRowToJsonLd(row, updatedAt = nowIso()) {
 export function convertJsonLdToNlpQaOntologyRow(row) {
   return {
     iri: String(row?.['@id'] || ''),
-    type: readJsonLdValue(row, COMMON_NAMESPACE_IRIS.rdf.type),
-    label: readJsonLdValue(row, COMMON_NAMESPACE_IRIS.rdfs.label),
-    prefLabel: readJsonLdValue(row, COMMON_NAMESPACE_IRIS.skos.prefLabel),
-    definition: readJsonLdValue(row, COMMON_NAMESPACE_IRIS.skos.definition),
-    example: readJsonLdValue(row, COMMON_NAMESPACE_IRIS.skos.example),
-    scopeNote: readJsonLdValue(row, COMMON_NAMESPACE_IRIS.skos.scopeNote),
-    acronym: readJsonLdValue(row, COMMON_NAMESPACE_IRIS.cco2.acronym),
+    type: readJsonLdScalarValueForIri(row, COMMON_NAMESPACE_IRIS.rdf.type),
+    label: readJsonLdScalarValueForIri(row, COMMON_NAMESPACE_IRIS.rdfs.label),
+    prefLabel: readJsonLdScalarValueForIri(row, COMMON_NAMESPACE_IRIS.skos.prefLabel),
+    definition: readJsonLdScalarValueForIri(row, COMMON_NAMESPACE_IRIS.skos.definition),
+    example: readJsonLdScalarValueForIri(row, COMMON_NAMESPACE_IRIS.skos.example),
+    scopeNote: readJsonLdScalarValueForIri(row, COMMON_NAMESPACE_IRIS.skos.scopeNote),
+    acronym: readJsonLdScalarValueForIri(row, COMMON_NAMESPACE_IRIS.cco2.acronym),
     modified: !!row?.[COMMON_NAMESPACE_IRIS.dcterms.modified]
   };
 }
@@ -116,18 +116,18 @@ export function convertJsonLdToNlpQaOntologyRow(row) {
  * @param {string} [options.updatedAt]
  * @returns {object}
  */
-export function createNlpQaStateJsonLd(payload = {}, { stateId, updatedAt = nowIso() } = {}) {
+export function createNlpQaStateJsonLd(payload = {}, { stateId, updatedAt = createIsoTimestamp() } = {}) {
   const rows = Array.isArray(payload.rows) ? payload.rows : [];
-  const id = createStateIri(stateId);
-  return stripUndefined({
+  const id = createNlpQaStateIri(stateId);
+  return stripUndefinedJsonLdProperties({
     '@context': PROJECT_RECORD_JSONLD_CONTEXT,
     '@id': id,
     '@type': COMMON_NAMESPACE_IRIS.okea.Setting,
-    [COMMON_NAMESPACE_IRIS.dcterms.identifier]: stringLiteral(id),
-    [COMMON_NAMESPACE_IRIS.dcterms.modified]: dateTimeLiteral(updatedAt),
+    [COMMON_NAMESPACE_IRIS.dcterms.identifier]: createJsonLdStringLiteral(id),
+    [COMMON_NAMESPACE_IRIS.dcterms.modified]: createJsonLdDateTimeLiteral(updatedAt),
     [COMMON_NAMESPACE_IRIS.okea.appId]: NLP_QA_APP_ID,
     [COMMON_NAMESPACE_IRIS.okea.settingKey]: NLP_QA_LAST_STATE_KEY,
-    [COMMON_NAMESPACE_IRIS.okea.fileName]: payload.fileName ? stringLiteral(payload.fileName) : undefined,
+    [COMMON_NAMESPACE_IRIS.okea.fileName]: payload.fileName ? createJsonLdStringLiteral(payload.fileName) : undefined,
     [COMMON_NAMESPACE_IRIS.okea.uiState]: createNlpQaUiStateJsonLd(payload),
     [COMMON_NAMESPACE_IRIS.rdf.value]: rows.map((row) => convertNlpQaOntologyRowToJsonLd(row, updatedAt))
   });
@@ -146,12 +146,12 @@ export function readNlpQaStatePayloadFromJsonLd(state) {
     ? state[COMMON_NAMESPACE_IRIS.rdf.value].map(convertJsonLdToNlpQaOntologyRow)
     : [];
   return {
-    fileName: readJsonLdValue(state, COMMON_NAMESPACE_IRIS.okea.fileName),
+    fileName: readJsonLdScalarValueForIri(state, COMMON_NAMESPACE_IRIS.okea.fileName),
     rows,
-    filter: readSettingValue(uiState, 'filter') || 'all',
-    scratchCheckModes: readSettingValue(uiState, 'scratchCheckModes') || undefined,
-    ontologyCheckModes: readSettingValue(uiState, 'ontologyCheckModes') || undefined,
-    scratch: readSettingValue(uiState, 'scratch') || undefined
+    filter: readNlpQaUiSettingValue(uiState, 'filter') || 'all',
+    scratchCheckModes: readNlpQaUiSettingValue(uiState, 'scratchCheckModes') || undefined,
+    ontologyCheckModes: readNlpQaUiSettingValue(uiState, 'ontologyCheckModes') || undefined,
+    scratch: readNlpQaUiSettingValue(uiState, 'scratch') || undefined
   };
 }
 
@@ -161,7 +161,7 @@ export function readNlpQaStatePayloadFromJsonLd(state) {
  * @param {NlpQaStatePayload} payload
  * @returns {Promise<object>}
  */
-export async function saveLatestNlpQaStateToIndexedDb(payload) {
+export async function storeLatestNlpQaStateInIndexedDb(payload) {
   const state = createNlpQaStateJsonLd(payload);
   const stores = await openOcdProjectStores();
   await stores.settings.writeSettingValue(NLP_QA_LAST_STATE_KEY, state);
@@ -173,7 +173,7 @@ export async function saveLatestNlpQaStateToIndexedDb(payload) {
  *
  * @returns {Promise<NlpQaStatePayload|null>}
  */
-export async function loadLatestNlpQaStateFromIndexedDb() {
+export async function readLatestNlpQaStateFromIndexedDb() {
   const stores = await openOcdProjectStores();
   const state = await stores.settings.readSettingValue(NLP_QA_LAST_STATE_KEY, null);
   return readNlpQaStatePayloadFromJsonLd(/** @type {object|null} */ (state));
@@ -188,11 +188,11 @@ export async function loadLatestNlpQaStateFromIndexedDb() {
  * @param {string} [options.createdAt]
  * @returns {Promise<PersistedNlpQaRun>}
  */
-export async function saveNlpQaRunToIndexedDb(payload, { label, createdAt = nowIso() } = {}) {
+export async function storeNlpQaRunInIndexedDb(payload, { label, createdAt = createIsoTimestamp() } = {}) {
   const stores = await openOcdProjectStores();
   const state = createNlpQaStateJsonLd(payload, { updatedAt: createdAt });
   const title = label || `NLP QA${payload.fileName ? ` - ${payload.fileName}` : ''}`;
-  const reportFormat = getReportArtifactFormat();
+  const reportFormat = resolveNlpQaReportArtifactFormat();
   const artifact = await storeProjectArtifactData(stores, {
     projectId: DEFAULT_PROJECT_PORTFOLIO_PROJECT_ID,
     artifactKind: NLP_QA_REPORT_ARTIFACT_KIND,
@@ -253,15 +253,15 @@ function createNlpQaUiStateJsonLd(payload) {
   return {
     [COMMON_NAMESPACE_IRIS.okea.settingKey]: 'nlp-quality-assurance-ui-state',
     [COMMON_NAMESPACE_IRIS.rdf.value]: [
-      createSettingValue('filter', payload.filter || 'all'),
-      createSettingValue('scratchCheckModes', payload.scratchCheckModes || {}),
-      createSettingValue('ontologyCheckModes', payload.ontologyCheckModes || {}),
-      createSettingValue('scratch', payload.scratch || {})
+      createNlpQaUiSettingJsonLd('filter', payload.filter || 'all'),
+      createNlpQaUiSettingJsonLd('scratchCheckModes', payload.scratchCheckModes || {}),
+      createNlpQaUiSettingJsonLd('ontologyCheckModes', payload.ontologyCheckModes || {}),
+      createNlpQaUiSettingJsonLd('scratch', payload.scratch || {})
     ]
   };
 }
 
-function createSettingValue(key, value) {
+function createNlpQaUiSettingJsonLd(key, value) {
   return {
     '@type': COMMON_NAMESPACE_IRIS.okea.Setting,
     [COMMON_NAMESPACE_IRIS.okea.settingKey]: key,
@@ -269,7 +269,7 @@ function createSettingValue(key, value) {
   };
 }
 
-function readSettingValue(uiState, key) {
+function readNlpQaUiSettingValue(uiState, key) {
   const settings = Array.isArray(uiState?.[COMMON_NAMESPACE_IRIS.rdf.value])
     ? uiState[COMMON_NAMESPACE_IRIS.rdf.value]
     : [];
@@ -277,13 +277,13 @@ function readSettingValue(uiState, key) {
   return setting ? setting[COMMON_NAMESPACE_IRIS.rdf.value] : undefined;
 }
 
-function readJsonLdValue(record, key) {
+function readJsonLdScalarValueForIri(record, key) {
   const value = record?.[key];
-  if (Array.isArray(value)) return value.map(readJsonLdScalar).filter(Boolean).join('; ');
-  return readJsonLdScalar(value);
+  if (Array.isArray(value)) return value.map(readJsonLdScalarValue).filter(Boolean).join('; ');
+  return readJsonLdScalarValue(value);
 }
 
-function readJsonLdScalar(value) {
+function readJsonLdScalarValue(value) {
   if (value == null) return '';
   if (typeof value === 'object' && '@value' in value) return String(value['@value'] ?? '');
   if (typeof value === 'object' && '@id' in value) return String(value['@id'] ?? '');
@@ -294,11 +294,11 @@ function createNlpQaRunSummary(payload) {
   const rows = Array.isArray(payload.rows) ? payload.rows : [];
   return {
     [COMMON_NAMESPACE_IRIS.okea.documentCount]: rows.length,
-    [COMMON_NAMESPACE_IRIS.okea.enabled]: booleanLiteral(true)
+    [COMMON_NAMESPACE_IRIS.okea.enabled]: createJsonLdBooleanLiteral(true)
   };
 }
 
-function getReportArtifactFormat() {
+function resolveNlpQaReportArtifactFormat() {
   const result = getMimeTypeForFormatKey(NLP_QA_REPORT_FORMAT_KEY);
   if (!result.ok) {
     throw new Error(`Format registry is missing ${NLP_QA_REPORT_FORMAT_KEY}.`);
@@ -306,6 +306,6 @@ function getReportArtifactFormat() {
   return result.value;
 }
 
-function stripUndefined(record) {
+function stripUndefinedJsonLdProperties(record) {
   return Object.fromEntries(Object.entries(record).filter(([, value]) => value !== undefined));
 }

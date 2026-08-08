@@ -14,7 +14,7 @@ import { filterNlpQaCheckedRowsForDisplay, NLP_QA_CHECKED_FIELD_NAMES } from './
  * @param {string} status
  * @returns {string}
  */
-function getNlpQaStatusGlyph(status) {
+function deriveNlpQaStatusDisplayText(status) {
   if (status === 'fail') {
     return 'X';
   }
@@ -75,7 +75,7 @@ export function renderNlpQaScratchChecker(state, container) {
         <div class="ocd-toolbar-right">
           ${renderNlpQaCheckModeControls('scratch', state.checkModes)}
           <button id="checkScratchTextBtn" class="ocd-btn ocd-btn-primary" type="button">Check text</button>
-          <span class="ocd-badge ${state.status === 'fail' ? 'ocd-badge-danger' : state.status === 'warning' ? 'ocd-badge-warn' : 'ocd-badge-success'}">${escapeHtml(getNlpQaStatusGlyph(state.status))}</span>
+          <span class="ocd-badge ${state.status === 'fail' ? 'ocd-badge-danger' : state.status === 'warning' ? 'ocd-badge-warn' : 'ocd-badge-success'}">${escapeHtml(deriveNlpQaStatusDisplayText(state.status))}</span>
         </div>
       </div>
       <div class="ocd-nlpqa-preview">${renderNlpQaHighlightedText(state.text, state.issues)}</div>
@@ -132,7 +132,7 @@ export function renderNlpQaOntologyTable(checkedRows, filter, checkModes, contai
   for (const checkedRow of visibleRows) {
     const row = checkedRow.row;
     html += '<tr class="ocd-table-tr">';
-    html += `<td class="ocd-table-td"><span class="ocd-badge ${checkedRow.status === 'fail' ? 'ocd-badge-danger' : checkedRow.status === 'warning' ? 'ocd-badge-warn' : 'ocd-badge-success'}">${escapeHtml(getNlpQaStatusGlyph(checkedRow.status))}</span></td>`;
+    html += `<td class="ocd-table-td"><span class="ocd-badge ${checkedRow.status === 'fail' ? 'ocd-badge-danger' : checkedRow.status === 'warning' ? 'ocd-badge-warn' : 'ocd-badge-success'}">${escapeHtml(deriveNlpQaStatusDisplayText(checkedRow.status))}</span></td>`;
     html += `<td class="ocd-table-td"><div class="ocd-mono ocd-resource-iri">${escapeHtml(row.iri)}</div>${row.modified ? '<span class="ocd-chip">modified</span>' : ''}</td>`;
     for (const fieldName of NLP_QA_CHECKED_FIELD_NAMES) {
       const value = String(row[/** @type {keyof typeof row} */ (fieldName)] || '');

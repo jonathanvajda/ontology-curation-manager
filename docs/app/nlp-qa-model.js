@@ -187,7 +187,7 @@ export function shouldSkipTokenForNlpQaSpelling(token) {
  * @param {string} token
  * @returns {string[]}
  */
-export function getNlpQaSpellingLookupForms(token) {
+export function deriveNlpQaSpellingLookupForms(token) {
   const normalized = normalizeTokenForNlpQaLexicon(token);
   const forms = new Set([normalized]);
   if (normalized.endsWith("'s") && normalized.length > 3) {
@@ -225,7 +225,7 @@ export function getNlpQaSpellingLookupForms(token) {
  * @returns {boolean}
  */
 export function doesNlpQaLexiconContainTokenOrInflection(token, lexicon) {
-  return getNlpQaSpellingLookupForms(token).some((form) => lexicon.has(form));
+  return deriveNlpQaSpellingLookupForms(token).some((form) => lexicon.has(form));
 }
 
 /**

@@ -74,7 +74,7 @@ export const DEFAULT_NLP_QA_ONTOLOGY_CHECK_MODES = Object.freeze({
  * @param {readonly string[]} predicateIris
  * @returns {string}
  */
-export function getFirstLiteralValueForNlpQaPredicates(store, subjectIri, predicateIris) {
+export function readFirstLiteralValueForNlpQaPredicates(store, subjectIri, predicateIris) {
   for (const predicateIri of predicateIris) {
     const quads = store?.getQuads ? store.getQuads(subjectIri, predicateIri, null, null) : [];
     const literalQuad = quads.find((quad) => quad?.object?.termType === 'Literal');
@@ -110,13 +110,13 @@ export function extractNlpQaOntologyRowsFromRdfStore(store) {
     .sort((left, right) => left.localeCompare(right))
     .map((iri) => ({
       iri,
-      type: getFirstObjectValueForNlpQaPredicate(store, iri, COMMON_NAMESPACE_IRIS.rdf.type),
-      label: getFirstLiteralValueForNlpQaPredicates(store, iri, FIELD_PREDICATES.label),
-      prefLabel: getFirstLiteralValueForNlpQaPredicates(store, iri, FIELD_PREDICATES.prefLabel),
-      definition: getFirstLiteralValueForNlpQaPredicates(store, iri, FIELD_PREDICATES.definition),
-      example: getFirstLiteralValueForNlpQaPredicates(store, iri, FIELD_PREDICATES.example),
-      scopeNote: getFirstLiteralValueForNlpQaPredicates(store, iri, FIELD_PREDICATES.scopeNote),
-      acronym: getFirstLiteralValueForNlpQaPredicates(store, iri, FIELD_PREDICATES.acronym),
+      type: readFirstObjectValueForNlpQaPredicate(store, iri, COMMON_NAMESPACE_IRIS.rdf.type),
+      label: readFirstLiteralValueForNlpQaPredicates(store, iri, FIELD_PREDICATES.label),
+      prefLabel: readFirstLiteralValueForNlpQaPredicates(store, iri, FIELD_PREDICATES.prefLabel),
+      definition: readFirstLiteralValueForNlpQaPredicates(store, iri, FIELD_PREDICATES.definition),
+      example: readFirstLiteralValueForNlpQaPredicates(store, iri, FIELD_PREDICATES.example),
+      scopeNote: readFirstLiteralValueForNlpQaPredicates(store, iri, FIELD_PREDICATES.scopeNote),
+      acronym: readFirstLiteralValueForNlpQaPredicates(store, iri, FIELD_PREDICATES.acronym),
       modified: false
     }));
 }
@@ -128,7 +128,7 @@ export function extractNlpQaOntologyRowsFromRdfStore(store) {
  * @param {Partial<NlpQaCheckModes> | null | undefined} globalModes
  * @returns {NlpQaCheckModes}
  */
-export function getNlpQaCheckModesForOntologyField(fieldName, globalModes) {
+export function deriveNlpQaCheckModesForOntologyField(fieldName, globalModes) {
   const normalizedGlobalModes = normalizeNlpQaCheckModes(globalModes, DEFAULT_NLP_QA_ONTOLOGY_CHECK_MODES);
   const fieldNorms = NLP_QA_FIELD_CHECK_MODE_NORMS[/** @type {keyof typeof NLP_QA_FIELD_CHECK_MODE_NORMS} */ (fieldName)] ||
     { spelling: false, grammar: false, aristotelian: false };
@@ -147,7 +147,7 @@ export function getNlpQaCheckModesForOntologyField(fieldName, globalModes) {
  * @param {string} predicateIri
  * @returns {string}
  */
-export function getFirstObjectValueForNlpQaPredicate(store, subjectIri, predicateIri) {
+export function readFirstObjectValueForNlpQaPredicate(store, subjectIri, predicateIri) {
   const quad = (store?.getQuads ? store.getQuads(subjectIri, predicateIri, null, null) : [])[0];
   return quad?.object?.value ? String(quad.object.value) : '';
 }
@@ -195,7 +195,7 @@ export function checkNlpQaOntologyRow(row, lexicon, options = {}) {
       fieldName,
       iri: row.iri,
       compromiseNlp: options.compromiseNlp,
-      checkModes: getNlpQaCheckModesForOntologyField(fieldName, options.checkModes)
+      checkModes: deriveNlpQaCheckModesForOntologyField(fieldName, options.checkModes)
     }).issues;
   });
 
