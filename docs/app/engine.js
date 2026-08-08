@@ -1027,17 +1027,6 @@ function getDependencyCuratedInValue(lookupStore, iri, cceoFallbackPredicates = 
 }
 
 /**
- * Returns true when one IRI looks like it is local to the ontology under study.
- *
- * @param {string} iri
- * @param {string | null} ontologyNamespace
- * @returns {boolean}
- */
-function isInOntologyNamespace(iri, ontologyNamespace) {
-  return isIriInNamespace(iri, ontologyNamespace);
-}
-
-/**
  * Extracts candidate external IRI dependencies used by a primary ontology.
  *
  * The extraction intentionally favors recall over precision:
@@ -1088,7 +1077,7 @@ export function extractExternalIriDependencies(primaryStore, lookupStore = prima
 
     if (
       quad?.subject?.termType === 'NamedNode' &&
-      !isInOntologyNamespace(String(quad.subject.value || ''), ontologyNamespace)
+      !isIriInNamespace(String(quad.subject.value || ''), ontologyNamespace)
     ) {
       addDependency(String(quad.subject.value || ''), 'external-subject');
     }
