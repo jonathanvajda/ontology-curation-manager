@@ -18,6 +18,7 @@
     "jest": "^29.7.0"
   },
   "scripts": {
+    "build:nlp-qa-lexicon": "node ./src/lexicon-build/build-english-lexicon.js",
     "check": "npm run lint && npm test",
     "lint": "eslint . --quiet",
     "test": "npm run test:jest",
