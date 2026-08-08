@@ -119,12 +119,13 @@
             class="ocd-input ocd-input-file"
             type="file"
             id="ontologyFiles"
-            accept=".ttl,.turtle,.rdf,.owl,.xml,.nt,.ntriples,.nq,.trig,.n3,.jsonld,.json-ld"
           />
 
           <div class="ocd-actions">
             <button id="loadFilesForNlpQaBtn" class="ocd-btn ocd-btn-primary" type="button">Load file</button>
             <button id="restoreNlpQaStateBtn" class="ocd-btn ocd-btn-secondary" type="button">Restore local state</button>
+            <button id="saveNlpQaRunBtn" class="ocd-btn ocd-btn-secondary" type="button">Save QA run</button>
+            <button id="mirrorNlpQaRunFolderBtn" class="ocd-btn ocd-btn-secondary" type="button">Save run to folder</button>
             <button id="exportNlpQaTurtleBtn" class="ocd-btn ocd-btn-tertiary" type="button">Download Turtle</button>
           </div>
         </div>
@@ -147,7 +148,7 @@
       <div class="ocd-toolbar">
         <div class="ocd-toolbar-left">
           <h2 class="ocd-title">Local State Model</h2>
-          <p class="ocd-muted">Ontology RDF is parsed into memory, annotation rows are checked from memory, and IndexedDB stores the latest editable QA state. The table is a render target for that state.</p>
+          <p class="ocd-muted">Ontology RDF is parsed into memory, annotation rows are checked from memory, and IndexedDB stores the latest editable QA state plus explicit QA run records. File System Access can mirror a saved QA run report into a selected project folder.</p>
         </div>
       </div>
     </div>
@@ -157,8 +158,8 @@
     <details class="ocd-site-footer-notice" open>
       <summary><strong>Important User Data Notice</strong></summary>
       <p>
-        This page processes ontology files locally in your browser. The latest QA state is saved in IndexedDB on this device,
-        and downloads are generated locally.
+        This page processes ontology files locally in your browser. The latest QA state and saved QA runs are stored in IndexedDB on this device,
+        folder mirrors use browser File System Access when you choose a project folder, and downloads are generated locally.
       </p>
     </details>
     <p class="ocd-site-footer-meta"><small>Copyright 2026, Jonathan Vajda</small></p>

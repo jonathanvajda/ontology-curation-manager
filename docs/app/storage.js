@@ -87,6 +87,16 @@ async function openOcdStores() {
 }
 
 /**
+ * Opens shared OCD project portfolio stores for feature modules that need
+ * artifact/run/settings access without creating app-local IndexedDB schemas.
+ *
+ * @returns {Promise<ReturnType<typeof createProjectPortfolioStores>>}
+ */
+export function openOcdProjectStores() {
+  return openOcdStores();
+}
+
+/**
  * Saves a run and updates the "last" pointer.
  *
  * @param {SaveRunInput} input

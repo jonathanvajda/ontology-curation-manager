@@ -2,7 +2,9 @@
 // @ts-check
 
 import { parseOntologyInput, serializeOntologyStore } from './engine.js';
-import { downloadTextFile } from './shared/browser-file-io/index.js';
+import { createAcceptAttribute, downloadTextFile } from './shared/browser-file-io/index.js';
+import { SUPPORTED_MIME_DESCRIPTORS } from './shared/format-registry/index.js';
+import { selectProjectFolder } from './shared/indexeddb-data-management/index.js';
 import { getTimestampForFileName, safeFilePart } from './shared.js';
 import { checkTextFieldWithNlpQa, DEFAULT_NLP_QA_CHECK_MODES, normalizeNlpQaCheckModes } from './nlp-qa-model.js';
 import {
@@ -12,7 +14,12 @@ import {
   extractNlpQaOntologyRowsFromRdfStore,
   updateNlpQaOntologyRowsWithEditedField
 } from './nlp-qa-ontology.js';
-import { loadLatestNlpQaStateFromIndexedDb, saveLatestNlpQaStateToIndexedDb } from './nlp-qa-storage.js';
+import {
+  loadLatestNlpQaStateFromIndexedDb,
+  saveLatestNlpQaStateToIndexedDb,
+  saveNlpQaRunToIndexedDb,
+  writeNlpQaRunToProjectFolder
+} from './nlp-qa-storage.js';
 import { renderNlpQaOntologyTable, renderNlpQaScratchChecker } from './render-nlp-qa.js';
 
 /** @typedef {import('./nlp-qa-ontology.js').NlpQaOntologyRow} NlpQaOntologyRow */
@@ -29,6 +36,10 @@ const loadButton = /** @type {HTMLButtonElement | null} */ (document.getElementB
 const restoreButton = /** @type {HTMLButtonElement | null} */ (document.getElementById('restoreNlpQaStateBtn'));
 /** @type {HTMLButtonElement | null} */
 const exportButton = /** @type {HTMLButtonElement | null} */ (document.getElementById('exportNlpQaTurtleBtn'));
+/** @type {HTMLButtonElement | null} */
+const saveRunButton = /** @type {HTMLButtonElement | null} */ (document.getElementById('saveNlpQaRunBtn'));
+/** @type {HTMLButtonElement | null} */
+const mirrorFolderButton = /** @type {HTMLButtonElement | null} */ (document.getElementById('mirrorNlpQaRunFolderBtn'));
 /** @type {HTMLElement | null} */
 const statusElement = document.getElementById('status');
 /** @type {HTMLElement | null} */
@@ -56,6 +67,10 @@ let scratchState = { text: '', status: 'pass', issues: [], checkModes: scratchCh
 let saveTimer = null;
 /** @type {number | null} */
 let checkTimer = null;
+/** @type {Awaited<ReturnType<typeof saveNlpQaRunToIndexedDb>> | null} */
+let latestSavedRun = null;
+/** @type {FileSystemDirectoryHandle | null} */
+let selectedProjectFolderHandle = null;
 
 /**
  * Returns the browser-global Compromise function when available.
@@ -96,6 +111,28 @@ function refreshNlpQaCheckedStateFromMemory() {
   if (exportButton) {
     exportButton.disabled = !parsedOntology;
   }
+  if (saveRunButton) {
+    saveRunButton.disabled = !ontologyRows.length && !scratchState.text;
+  }
+  if (mirrorFolderButton) {
+    mirrorFolderButton.disabled = !ontologyRows.length && !scratchState.text;
+  }
+}
+
+/**
+ * Builds the current NLP QA state payload used by settings, runs, and FSA.
+ *
+ * @returns {object}
+ */
+function createCurrentNlpQaPayload() {
+  return {
+    fileName: currentFileName,
+    rows: ontologyRows,
+    filter: activeFilter,
+    scratchCheckModes,
+    ontologyCheckModes,
+    scratch: scratchState
+  };
 }
 
 /**
@@ -130,14 +167,7 @@ function scheduleNlpQaStatePersistence() {
     window.clearTimeout(saveTimer);
   }
   saveTimer = window.setTimeout(() => {
-    void saveLatestNlpQaStateToIndexedDb({
-      fileName: currentFileName,
-      rows: ontologyRows,
-      filter: activeFilter,
-      scratchCheckModes,
-      ontologyCheckModes,
-      scratch: scratchState
-    }).catch((error) => {
+    void saveLatestNlpQaStateToIndexedDb(createCurrentNlpQaPayload()).catch((error) => {
       console.error('Error saving NLP QA state:', error);
     });
   }, 300);
@@ -180,8 +210,9 @@ async function loadSelectedOntologyForNlpQa() {
 async function restoreLatestNlpQaState() {
   setStatus('Restoring latest NLP QA state...');
   try {
-    const saved = await loadLatestNlpQaStateFromIndexedDb();
-    const payload = /** @type {{ fileName?: string, rows?: NlpQaOntologyRow[], filter?: typeof activeFilter, scratchCheckModes?: Partial<NlpQaCheckModes>, ontologyCheckModes?: Partial<NlpQaCheckModes>, scratch?: typeof scratchState } | null} */ (saved?.payload || null);
+    const payload = /** @type {{ fileName?: string, rows?: NlpQaOntologyRow[], filter?: typeof activeFilter, scratchCheckModes?: Partial<NlpQaCheckModes>, ontologyCheckModes?: Partial<NlpQaCheckModes>, scratch?: typeof scratchState } | null} */ (
+      await loadLatestNlpQaStateFromIndexedDb()
+    );
     if (!payload || !Array.isArray(payload.rows)) {
       setStatus('No saved NLP QA state was found in IndexedDB.');
       return;
@@ -199,6 +230,53 @@ async function restoreLatestNlpQaState() {
   } catch (error) {
     console.error('Error restoring NLP QA state:', error);
     setStatus(error instanceof Error ? `Error: ${error.message}` : 'Error restoring NLP QA state.');
+  }
+}
+
+/**
+ * Saves the current QA state as an explicit project run and report artifact.
+ *
+ * @returns {Promise<Awaited<ReturnType<typeof saveNlpQaRunToIndexedDb>> | null>}
+ */
+async function saveCurrentNlpQaRun() {
+  if (!ontologyRows.length && !scratchState.text) {
+    setStatus('Load ontology annotations or enter scratch text before saving an NLP QA run.');
+    return null;
+  }
+  try {
+    latestSavedRun = await saveNlpQaRunToIndexedDb(createCurrentNlpQaPayload());
+    setStatus(`Saved NLP QA run ${latestSavedRun.run.runId} to IndexedDB.`);
+    return latestSavedRun;
+  } catch (error) {
+    console.error('Error saving NLP QA run:', error);
+    setStatus(error instanceof Error ? `Error: ${error.message}` : 'Error saving NLP QA run.');
+    return null;
+  }
+}
+
+/**
+ * Saves the current run to IndexedDB and mirrors its report artifact to a
+ * user-selected File System Access project folder.
+ *
+ * @returns {Promise<void>}
+ */
+async function saveCurrentNlpQaRunToProjectFolder() {
+  const savedRun = await saveCurrentNlpQaRun();
+  if (!savedRun) return;
+  try {
+    if (!selectedProjectFolderHandle) {
+      const result = await selectProjectFolder({ id: 'ocd-nlp-qa-project-folder' });
+      if (!result.ok) {
+        setStatus('Project folder selection was cancelled or is not supported in this browser.');
+        return;
+      }
+      selectedProjectFolderHandle = result.value;
+    }
+    const written = await writeNlpQaRunToProjectFolder(selectedProjectFolderHandle, savedRun);
+    setStatus(`Mirrored NLP QA report to project folder: ${written.file.path}`);
+  } catch (error) {
+    console.error('Error writing NLP QA run to project folder:', error);
+    setStatus(error instanceof Error ? `Error: ${error.message}` : 'Error writing NLP QA run to project folder.');
   }
 }
 
@@ -234,6 +312,12 @@ async function downloadCurrentNlpQaOntologyAsTurtle() {
  * @returns {void}
  */
 function initializeNlpQaPage() {
+  if (filesInput) {
+    filesInput.accept = createAcceptAttribute(
+      Object.values(SUPPORTED_MIME_DESCRIPTORS).filter((descriptor) => descriptor.category === 'rdf'),
+      { includeMimeTypes: true }
+    );
+  }
   refreshNlpQaScratchState();
   refreshNlpQaCheckedStateFromMemory();
 
@@ -248,6 +332,12 @@ function initializeNlpQaPage() {
   });
   restoreButton?.addEventListener('click', () => {
     void restoreLatestNlpQaState();
+  });
+  saveRunButton?.addEventListener('click', () => {
+    void saveCurrentNlpQaRun();
+  });
+  mirrorFolderButton?.addEventListener('click', () => {
+    void saveCurrentNlpQaRunToProjectFolder();
   });
 
   scratchContainer?.addEventListener('click', (event) => {
