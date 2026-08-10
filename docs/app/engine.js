@@ -41,6 +41,9 @@ import {
   isIriInNamespace
 } from './shared/ontology-utils/index.js';
 import {
+  readOntologyMetadataRecordFromQuads
+} from './shared/ontology-metadata/index.js';
+import {
   getCurationStatusLabel,
   getCurationStatusRank
 } from './grader.js';
@@ -917,7 +920,8 @@ export function collectAssertedNamedResources(store) {
  * @returns {OntologyMetadata}
  */
 export function extractOntologyMetadata(store, fileName) {
-  const ontologyIri = guessOntologyIri(store);
+  const metadataRecord = readOntologyMetadataRecordFromQuads(store);
+  const ontologyIri = metadataRecord?.['@id'] || guessOntologyIri(store);
   const labeledResources = collectLabeledResources(store);
   const quads = store.getQuads(null, null, null, null);
 
@@ -925,17 +929,47 @@ export function extractOntologyMetadata(store, fileName) {
     fileName: fileName || 'ontology.ttl',
     ontologyIri,
     title:
-      getFirstObjectValue(store, ontologyIri, COMMON_NAMESPACE_IRIS.dcterms.title) ||
+      readFirstJsonLdValue(metadataRecord, COMMON_NAMESPACE_IRIS.dcterms.title) ||
       getFirstObjectValue(store, ontologyIri, COMMON_NAMESPACE_IRIS.rdfs.label),
-    description: getFirstObjectValue(store, ontologyIri, COMMON_NAMESPACE_IRIS.dcterms.description),
-    versionIri: getFirstObjectValue(store, ontologyIri, COMMON_NAMESPACE_IRIS.owl.versionIRI),
-    versionInfo: getFirstObjectValue(store, ontologyIri, COMMON_NAMESPACE_IRIS.owl.versionInfo),
-    license: getFirstObjectValue(store, ontologyIri, COMMON_NAMESPACE_IRIS.dcterms.license),
+    description: readFirstJsonLdValue(metadataRecord, COMMON_NAMESPACE_IRIS.dcterms.description),
+    versionIri: readFirstJsonLdValue(metadataRecord, COMMON_NAMESPACE_IRIS.owl.versionIRI),
+    versionInfo: readFirstJsonLdValue(metadataRecord, COMMON_NAMESPACE_IRIS.owl.versionInfo),
+    license: readFirstJsonLdValue(metadataRecord, COMMON_NAMESPACE_IRIS.dcterms.license),
     accessRights: getFirstObjectValue(store, ontologyIri, COMMON_NAMESPACE_IRIS.dcterms.accessRights),
-    imports: getObjectValues(store, ontologyIri, COMMON_NAMESPACE_IRIS.owl.imports).sort(),
+    imports: readJsonLdValues(metadataRecord, COMMON_NAMESPACE_IRIS.owl.imports).sort(),
     tripleCount: quads.length,
     labeledResourceCount: labeledResources.length
   };
+}
+
+/**
+ * Reads the first string or IRI value for a full-IRI key in a JSON-LD metadata record.
+ *
+ * @param {object|null} metadataRecord
+ * @param {string} predicateIri
+ * @returns {string|null}
+ */
+function readFirstJsonLdValue(metadataRecord, predicateIri) {
+  return readJsonLdValues(metadataRecord, predicateIri)[0] || null;
+}
+
+/**
+ * Reads all string or IRI values for a full-IRI key in a JSON-LD metadata record.
+ *
+ * @param {object|null} metadataRecord
+ * @param {string} predicateIri
+ * @returns {string[]}
+ */
+function readJsonLdValues(metadataRecord, predicateIri) {
+  const values = metadataRecord?.[predicateIri];
+  const list = Array.isArray(values) ? values : values == null ? [] : [values];
+  return list
+    .map((value) => {
+      if (value && typeof value === 'object' && '@id' in value) return String(value['@id'] || '');
+      if (value && typeof value === 'object' && '@value' in value) return String(value['@value'] || '');
+      return value == null ? '' : String(value);
+    })
+    .filter(Boolean);
 }
 
 /**
