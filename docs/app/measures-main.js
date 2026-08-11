@@ -26,6 +26,7 @@ import {
   buildMeasuresYaml
 } from './measures-export.js';
 import { createAcceptAttribute, downloadTextFile } from './shared/browser-file-io/index.js';
+import { createReportTextExportDescriptor } from './shared/report-export/index.js';
 import { SUPPORTED_MIME_DESCRIPTORS } from './shared/format-registry/mime-registry.js';
 import {
   renderImportSnippetModal,
@@ -625,48 +626,49 @@ function downloadMeasuresForAnalysis(analysisKey) {
     { separator: '_' }
   ) || 'ontology';
 
-  /** @type {{ text: string, fileName: string, mimeType: string }} */
+  /** @type {{ text: string, baseFileName: string, formatKey: string }} */
   let exportPayload;
   switch (format) {
     case 'tsv':
       exportPayload = {
         text: buildMeasuresTsv(analysis.metrics),
-        fileName: `${fileStem}_measures_${getTimestampForFilename()}.tsv`,
-        mimeType: 'text/tab-separated-values;charset=utf-8'
+        baseFileName: `${fileStem}_measures`,
+        formatKey: 'tsv'
       };
       break;
     case 'json':
       exportPayload = {
         text: buildMeasuresJson(analysis.metrics),
-        fileName: `${fileStem}_measures_${getTimestampForFilename()}.json`,
-        mimeType: 'application/json;charset=utf-8'
+        baseFileName: `${fileStem}_measures`,
+        formatKey: 'json'
       };
       break;
     case 'yaml':
       exportPayload = {
         text: buildMeasuresYaml(analysis.metrics),
-        fileName: `${fileStem}_measures_${getTimestampForFilename()}.yaml`,
-        mimeType: 'text/yaml;charset=utf-8'
+        baseFileName: `${fileStem}_measures`,
+        formatKey: 'yaml'
       };
       break;
     case 'html':
       exportPayload = {
         text: buildMeasuresHtml(`${analysis.fileName} ontology measures`, analysis.metrics),
-        fileName: `${fileStem}_measures_${getTimestampForFilename()}.html`,
-        mimeType: 'text/html;charset=utf-8'
+        baseFileName: `${fileStem}_measures`,
+        formatKey: 'html'
       };
       break;
     case 'csv':
     default:
       exportPayload = {
         text: buildMeasuresCsv(analysis.metrics),
-        fileName: `${fileStem}_measures_${getTimestampForFilename()}.csv`,
-        mimeType: 'text/csv;charset=utf-8'
+        baseFileName: `${fileStem}_measures`,
+        formatKey: 'csv'
       };
       break;
   }
 
-  downloadTextFile(exportPayload.fileName, exportPayload.text, { mimeType: exportPayload.mimeType });
+  const descriptor = createReportTextExportDescriptor(exportPayload);
+  downloadTextFile(descriptor.fileName, descriptor.text, { mimeType: descriptor.mimeType });
   setStatus(`Downloaded ${format.toUpperCase()} measures export for ${analysis.fileName}.`);
 }
 
@@ -688,48 +690,49 @@ function downloadAllAnalyses() {
     metrics: analysis.metrics
   }));
 
-  /** @type {{ text: string, fileName: string, mimeType: string }} */
+  /** @type {{ text: string, baseFileName: string, formatKey: string }} */
   let exportPayload;
   switch (format) {
     case 'tsv':
       exportPayload = {
         text: buildAllMeasuresTsv(exportableAnalyses),
-        fileName: `ontology-measures_all_${getTimestampForFilename()}.tsv`,
-        mimeType: 'text/tab-separated-values;charset=utf-8'
+        baseFileName: 'ontology-measures_all',
+        formatKey: 'tsv'
       };
       break;
     case 'json':
       exportPayload = {
         text: buildAllMeasuresJson(exportableAnalyses),
-        fileName: `ontology-measures_all_${getTimestampForFilename()}.json`,
-        mimeType: 'application/json;charset=utf-8'
+        baseFileName: 'ontology-measures_all',
+        formatKey: 'json'
       };
       break;
     case 'yaml':
       exportPayload = {
         text: buildAllMeasuresYaml(exportableAnalyses),
-        fileName: `ontology-measures_all_${getTimestampForFilename()}.yaml`,
-        mimeType: 'text/yaml;charset=utf-8'
+        baseFileName: 'ontology-measures_all',
+        formatKey: 'yaml'
       };
       break;
     case 'html':
       exportPayload = {
         text: buildAllMeasuresHtml('Ontology measures', exportableAnalyses),
-        fileName: `ontology-measures_all_${getTimestampForFilename()}.html`,
-        mimeType: 'text/html;charset=utf-8'
+        baseFileName: 'ontology-measures_all',
+        formatKey: 'html'
       };
       break;
     case 'csv':
     default:
       exportPayload = {
         text: buildAllMeasuresCsv(exportableAnalyses),
-        fileName: `ontology-measures_all_${getTimestampForFilename()}.csv`,
-        mimeType: 'text/csv;charset=utf-8'
+        baseFileName: 'ontology-measures_all',
+        formatKey: 'csv'
       };
       break;
   }
 
-  downloadTextFile(exportPayload.fileName, exportPayload.text, { mimeType: exportPayload.mimeType });
+  const descriptor = createReportTextExportDescriptor(exportPayload);
+  downloadTextFile(descriptor.fileName, descriptor.text, { mimeType: descriptor.mimeType });
   setStatus(`Downloaded ${format.toUpperCase()} export for ${lastAnalyses.length} ontology analyses.`);
 }
 

@@ -1,7 +1,10 @@
 // app/measures-export.js
 // @ts-check
 
-import { escapeHtml } from './shared.js';
+import {
+  serializeReportDocumentToHtml,
+  serializeReportValueToYaml
+} from './shared/report-export/index.js';
 import { COMMON_NAMESPACE_IRIS } from './shared/namespace-registry/namespace-registry.js';
 
 import { serializeDelimitedRecords } from './shared/tabular-io/index.js';
@@ -207,27 +210,14 @@ export function buildMeasuresJson(metrics) {
  */
 export function buildMeasuresYaml(metrics) {
   const rows = Array.isArray(metrics) ? metrics : [];
-  const lines = ['metrics:'];
-
-  for (const metric of rows) {
-    lines.push(`  - metric: "${String(metric?.metric || '').replace(/"/g, '\\"')}"`);
-    lines.push(`    metric_type: "${String(metric?.metricType || '').replace(/"/g, '\\"')}"`);
-    if (Array.isArray(metric?.metricValue)) {
-      lines.push('    metric_value:');
-      for (const value of metric.metricValue) {
-        lines.push(`      - "${String(value).replace(/"/g, '\\"')}"`);
-      }
-    } else if (typeof metric?.metricValue === 'boolean') {
-      lines.push(`    metric_value: ${metric.metricValue ? 'true' : 'false'}`);
-    } else if (typeof metric?.metricValue === 'number') {
-      lines.push(`    metric_value: ${metric.metricValue}`);
-    } else {
-      lines.push(`    metric_value: "${String(metric?.metricValue || '').replace(/"/g, '\\"')}"`);
-    }
-    lines.push(`    explanation: "${String(metric?.explanation || '').replace(/"/g, '\\"')}"`);
-  }
-
-  return lines.join('\n') + '\n';
+  return serializeReportValueToYaml({
+    metrics: rows.map((metric) => ({
+      metric: metric?.metric || '',
+      metric_type: metric?.metricType || '',
+      metric_value: metric?.metricValue ?? '',
+      explanation: metric?.explanation || ''
+    }))
+  });
 }
 
 /**
@@ -239,23 +229,18 @@ export function buildMeasuresYaml(metrics) {
  */
 export function buildMeasuresHtml(title, metrics) {
   const rows = Array.isArray(metrics) ? metrics : [];
-  let html = '<!doctype html><html><head><meta charset="utf-8" />';
-  html += '<meta name="viewport" content="width=device-width, initial-scale=1" />';
-  html += `<title>${escapeHtml(title)}</title>`;
-  html += '<style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:24px;}table{width:100%;border-collapse:collapse;}th,td{border-bottom:1px solid #ddd;padding:8px;text-align:left;vertical-align:top;}th{background:#f7f7f7;}h1{margin-top:0}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}</style>';
-  html += '</head><body>';
-  html += `<h1>${escapeHtml(title)}</h1>`;
-  html += '<table><thead><tr><th>Metric</th><th>Value</th><th>Type</th><th>Explanation</th></tr></thead><tbody>';
-  for (const metric of rows) {
-    html += '<tr>';
-    html += `<td class="mono">${escapeHtml(metric?.metric || '')}</td>`;
-    html += `<td>${escapeHtml(metricValueToString(metric?.metricValue || ''))}</td>`;
-    html += `<td>${escapeHtml(metric?.metricType || '')}</td>`;
-    html += `<td>${escapeHtml(metric?.explanation || '')}</td>`;
-    html += '</tr>';
-  }
-  html += '</tbody></table></body></html>';
-  return html;
+  return serializeReportDocumentToHtml({
+    title,
+    tables: [{
+      headers: ['Metric', 'Value', 'Type', 'Explanation'],
+      rows: rows.map((metric) => [
+        metric?.metric || '',
+        metricValueToString(metric?.metricValue || ''),
+        metric?.metricType || '',
+        metric?.explanation || ''
+      ])
+    }]
+  });
 }
 
 /**
@@ -326,32 +311,18 @@ export function buildAllMeasuresJson(analyses) {
  */
 export function buildAllMeasuresYaml(analyses) {
   const rows = Array.isArray(analyses) ? analyses : [];
-  const lines = ['analyses:'];
-
-  for (const analysis of rows) {
-    lines.push(`  - fileName: "${String(analysis?.fileName || '').replace(/"/g, '\\"')}"`);
-    lines.push(`    ontologyIri: "${String(analysis?.ontologyIri || '').replace(/"/g, '\\"')}"`);
-    lines.push('    metrics:');
-    for (const metric of Array.isArray(analysis?.metrics) ? analysis.metrics : []) {
-      lines.push(`      - metric: "${String(metric?.metric || '').replace(/"/g, '\\"')}"`);
-      lines.push(`        metric_type: "${String(metric?.metricType || '').replace(/"/g, '\\"')}"`);
-      if (Array.isArray(metric?.metricValue)) {
-        lines.push('        metric_value:');
-        for (const value of metric.metricValue) {
-          lines.push(`          - "${String(value).replace(/"/g, '\\"')}"`);
-        }
-      } else if (typeof metric?.metricValue === 'boolean') {
-        lines.push(`        metric_value: ${metric.metricValue ? 'true' : 'false'}`);
-      } else if (typeof metric?.metricValue === 'number') {
-        lines.push(`        metric_value: ${metric.metricValue}`);
-      } else {
-        lines.push(`        metric_value: "${String(metric?.metricValue || '').replace(/"/g, '\\"')}"`);
-      }
-      lines.push(`        explanation: "${String(metric?.explanation || '').replace(/"/g, '\\"')}"`);
-    }
-  }
-
-  return lines.join('\n') + '\n';
+  return serializeReportValueToYaml({
+    analyses: rows.map((analysis) => ({
+      fileName: analysis?.fileName || '',
+      ontologyIri: analysis?.ontologyIri || '',
+      metrics: (Array.isArray(analysis?.metrics) ? analysis.metrics : []).map((metric) => ({
+        metric: metric?.metric || '',
+        metric_type: metric?.metricType || '',
+        metric_value: metric?.metricValue ?? '',
+        explanation: metric?.explanation || ''
+      }))
+    }))
+  });
 }
 
 /**
@@ -363,28 +334,20 @@ export function buildAllMeasuresYaml(analyses) {
  */
 export function buildAllMeasuresHtml(title, analyses) {
   const rows = Array.isArray(analyses) ? analyses : [];
-  let html = '<!doctype html><html><head><meta charset="utf-8" />';
-  html += '<meta name="viewport" content="width=device-width, initial-scale=1" />';
-  html += `<title>${escapeHtml(title)}</title>`;
-  html += '<style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:24px;}table{width:100%;border-collapse:collapse;margin-bottom:24px;}th,td{border-bottom:1px solid #ddd;padding:8px;text-align:left;vertical-align:top;}th{background:#f7f7f7;}h1,h2{margin-top:0}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}</style>';
-  html += '</head><body>';
-  html += `<h1>${escapeHtml(title)}</h1>`;
-
-  for (const analysis of rows) {
-    html += `<h2>${escapeHtml(analysis?.fileName || 'Ontology analysis')}</h2>`;
-    html += `<p class="mono">${escapeHtml(analysis?.ontologyIri || '')}</p>`;
-    html += '<table><thead><tr><th>Metric</th><th>Value</th><th>Type</th><th>Explanation</th></tr></thead><tbody>';
-    for (const metric of Array.isArray(analysis?.metrics) ? analysis.metrics : []) {
-      html += '<tr>';
-      html += `<td class="mono">${escapeHtml(metric?.metric || '')}</td>`;
-      html += `<td>${escapeHtml(metricValueToString(metric?.metricValue || ''))}</td>`;
-      html += `<td>${escapeHtml(metric?.metricType || '')}</td>`;
-      html += `<td>${escapeHtml(metric?.explanation || '')}</td>`;
-      html += '</tr>';
-    }
-    html += '</tbody></table>';
-  }
-
-  html += '</body></html>';
-  return html;
+  return serializeReportDocumentToHtml({
+    title,
+    sections: rows.map((analysis) => ({
+      title: analysis?.fileName || 'Ontology analysis',
+      metadata: [['Ontology IRI', analysis?.ontologyIri || '']],
+      tables: [{
+        headers: ['Metric', 'Value', 'Type', 'Explanation'],
+        rows: (Array.isArray(analysis?.metrics) ? analysis.metrics : []).map((metric) => [
+          metric?.metric || '',
+          metricValueToString(metric?.metricValue || ''),
+          metric?.metricType || '',
+          metric?.explanation || ''
+        ])
+      }]
+    }))
+  });
 }

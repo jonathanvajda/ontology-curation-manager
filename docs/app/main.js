@@ -51,6 +51,10 @@ import {
 } from './shared/format-registry/mime-registry.js';
 import { createAcceptAttribute, downloadTextFile } from './shared/browser-file-io/index.js';
 import { COMMON_NAMESPACE_IRIS } from './shared/namespace-registry/namespace-registry.js';
+import {
+  createReportTextExportDescriptor,
+  openPrintableHtmlDocument
+} from './shared/report-export/index.js';
 
 /** @typedef {import('./types.js').BatchRunPayload} BatchRunPayload */
 /** @typedef {import('./types.js').EvaluatedReport} EvaluatedReport */
@@ -75,8 +79,8 @@ import { COMMON_NAMESPACE_IRIS } from './shared/namespace-registry/namespace-reg
  * @property {string} label
  * @property {() => boolean} isAvailable
  * @property {() => string} build
- * @property {() => string} getFileName
- * @property {string} mimeType
+ * @property {() => string} getBaseFileName
+ * @property {string} formatKey
  */
 
 /** @type {HTMLInputElement | null} */
@@ -1864,30 +1868,30 @@ const downloadActions = {
     label: 'Results CSV',
     isAvailable: () => Array.isArray(lastResults) && lastResults.length > 0,
     build: () => buildResultsCsv(lastResults, lastOntologyReport?.ontologyIri || ''),
-    getFileName: () => `ocd-results_${getTimestampForFilename()}.csv`,
-    mimeType: 'text/csv;charset=utf-8'
+    getBaseFileName: () => 'ocd-results',
+    formatKey: 'csv'
   },
   ontologyYaml: {
     label: 'Ontology Report YAML',
     isAvailable: () => !!lastOntologyReport,
     build: () => buildOntologyReportYaml(lastOntologyReport),
-    getFileName: () => `ocd-ontology-report_${getTimestampForFilename()}.yaml`,
-    mimeType: 'text/yaml;charset=utf-8'
+    getBaseFileName: () => 'ocd-ontology-report',
+    formatKey: 'yaml'
   },
   htmlReport: {
     label: 'HTML Report',
     isAvailable: () =>
       !!lastOntologyReport || (Array.isArray(lastResults) && lastResults.length > 0),
     build: () => buildHtmlReport(getExportState()),
-    getFileName: () => `ocd-report_${getTimestampForFilename()}.html`,
-    mimeType: 'text/html;charset=utf-8'
+    getBaseFileName: () => 'ocd-report',
+    formatKey: 'html'
   },
   filteredResourcesCsv: {
     label: 'Filtered Resources CSV',
     isAvailable: () => Array.isArray(lastPerResource) && lastPerResource.length > 0,
     build: () => buildFilteredResourcesCsv(lastPerResource),
-    getFileName: () => `ocd-filtered-resources_${getTimestampForFilename()}.csv`,
-    mimeType: 'text/csv;charset=utf-8'
+    getBaseFileName: () => 'ocd-filtered-resources',
+    formatKey: 'csv'
   },
   standardDetailCsv: {
     label: 'Standard Detail CSV',
@@ -1896,16 +1900,16 @@ const downloadActions = {
       Array.isArray(lastResults) &&
       lastResults.length > 0,
     build: () => buildStandardDetailCsv(lastSelectedCriterionId, lastResults),
-    getFileName: () =>
-      `ocd-standard-detail_${normalizeStringToAsciiSlug(lastSelectedCriterionId || 'standard', { separator: '_' })}_${getTimestampForFilename()}.csv`,
-    mimeType: 'text/csv;charset=utf-8'
+    getBaseFileName: () =>
+      `ocd-standard-detail_${normalizeStringToAsciiSlug(lastSelectedCriterionId || 'standard', { separator: '_' })}`,
+    formatKey: 'csv'
   },
   batchSummaryCsv: {
     label: 'Batch Summary CSV',
     isAvailable: () => Array.isArray(lastBatchReports) && lastBatchReports.length > 0,
     build: () => buildBatchSummaryCsv(lastBatchReports),
-    getFileName: () => `ocd-batch-summary_${getTimestampForFilename()}.csv`,
-    mimeType: 'text/csv;charset=utf-8'
+    getBaseFileName: () => 'ocd-batch-summary',
+    formatKey: 'csv'
   }
 };
 
@@ -1987,7 +1991,12 @@ function handleDownloadSelected() {
   }
 
   try {
-    downloadTextFile(action.getFileName(), action.build(), { mimeType: action.mimeType });
+    const descriptor = createReportTextExportDescriptor({
+      text: action.build(),
+      formatKey: action.formatKey,
+      baseFileName: action.getBaseFileName()
+    });
+    downloadTextFile(descriptor.fileName, descriptor.text, { mimeType: descriptor.mimeType });
     setStatus(`Downloaded ${action.label}.`);
   } catch (error) {
     console.error(error);
@@ -2007,29 +2016,13 @@ function handlePrintReport() {
     return;
   }
 
-  const printWindow = window.open('', '_blank');
-  if (!printWindow) {
-    setStatus('Print window was blocked. Allow pop-ups and try again.');
-    return;
+  try {
+    openPrintableHtmlDocument(buildHtmlReport(getExportState()));
+    setStatus('Opened print view.');
+  } catch (error) {
+    console.error(error);
+    setStatus(error instanceof Error ? error.message : 'Print failed.');
   }
-
-  const reportHtml = buildHtmlReport(getExportState());
-  const printHtml = reportHtml.replace(
-    '</body>',
-    `<script>
-      window.addEventListener('load', () => {
-        window.print();
-      });
-      window.addEventListener('afterprint', () => {
-        window.close();
-      });
-    </script></body>`
-  );
-
-  printWindow.document.open();
-  printWindow.document.write(printHtml);
-  printWindow.document.close();
-  setStatus('Opened print view.');
 }
 
 /**
