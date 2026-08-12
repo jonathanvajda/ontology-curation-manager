@@ -9,8 +9,5 @@ PREFIX iao: <http://purl.obolibrary.org/obo/IAO_>
 SELECT DISTINCT ?resource WHERE {
   ?resource rdf:type owl:Class .
   FILTER (isIRI(?resource))
-  FILTER NOT EXISTS { ?resource owl:deprecated true }
-  FILTER NOT EXISTS { ?resource skos:example ?value }
+  FILTER NOT EXISTS { ?resource skos:scopeNote ?value }
 }
-# q_class-missing-skos-example.rq
-# Query to find a non-deprecated class with no skos:example

@@ -1,0 +1,9 @@
+# OWL 2 Structural Specification, section 11 (global restrictions on simple properties):
+# https://www.w3.org/TR/owl2-syntax/#Global_Restrictions_on_Axioms_in_OWL_2_DL
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+
+SELECT DISTINCT ?resource WHERE {
+  ?resource rdf:type owl:ObjectProperty, owl:TransitiveProperty, owl:AsymmetricProperty .
+}
+
