@@ -211,7 +211,7 @@
     },
     {
       "id": "criterion_ontologyHasVersionInfo",
-      "type": "recommendation",
+      "type": "requirement",
       "weight": 1,
       "label": "Ontology should have versionInfo",
       "guidance": "Add owl:versionInfo to the ontology so human-readable release information is available alongside the version IRI.",
@@ -272,6 +272,742 @@
       "label": "Labels should be unique",
       "guidance": "Review duplicate rdfs:label values and disambiguate them where needed so labels remain reliable for search, editing, and downstream use.",
       "remediationEffort": "case-by-case"
+    },
+    {
+      "id": "criterion_annotationpropertyMissingRdfsDomain",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Annotation property missing RDFS domain",
+      "guidance": "Add the missing assertion to every affected resource.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_classCcoAcronymMissingLanguageTag",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Class CCO acronym missing language tag",
+      "guidance": "Add an appropriate language tag to each affected annotation value so class cco acronym missing language tag is language-aware.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_classCcoDefinitionSourceMissingLanguageTag",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Class CCO definition source missing language tag",
+      "guidance": "Add an appropriate language tag to each affected annotation value so class cco definition source missing language tag is language-aware.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_classCcoDoctrinalDefinitionMissingLanguageTag",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Class CCO doctrinal definition missing language tag",
+      "guidance": "Add an appropriate language tag to each affected annotation value so class cco doctrinal definition missing language tag is language-aware.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_classDuplicateSkosDefinition",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Class duplicate SKOS definition",
+      "guidance": "Revise the duplicated SKOS definition so each affected resource has a distinct textual definition.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_classHasExactly1CcoIsCuratedInOntology",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Class has exactly one CCO is curated in Ontology",
+      "guidance": "Ensure every affected resource has exactly one value satisfying this requirement.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_classHasExactly1RdfsLabelWithEnglishLanguageTag",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Class has exactly one RDFS label with english language tag",
+      "guidance": "Ensure every affected resource has exactly one value satisfying this requirement.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_classHasExactly1SkosDefinitionWithEnglishLanguageTag",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Class has exactly one SKOS definition with english language tag",
+      "guidance": "Ensure every affected resource has exactly one value satisfying this requirement.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_classMissingDctermsBibliographiccitation",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Class missing DCTERMS bibliographic citation",
+      "guidance": "Add the missing assertion to every affected resource.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_classMissingSkosScopenote",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Class missing SKOS scope note",
+      "guidance": "Add the missing assertion to every affected resource.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_classRdfsCommentMissingLanguageTag",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Class RDFS comment missing language tag",
+      "guidance": "Add an appropriate language tag to each affected annotation value so class rdfs comment missing language tag is language-aware.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_classRdfsSeealsoMissingLanguageTag",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Class RDFS see also missing language tag",
+      "guidance": "Add an appropriate language tag to each affected annotation value so class rdfs see also missing language tag is language-aware.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_classSkosAltlabelMissingLanguageTag",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Class SKOS alternative label missing language tag",
+      "guidance": "Add an appropriate language tag to each affected annotation value so class skos alternative label missing language tag is language-aware.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_classSkosExampleMissingLanguageTag",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Class SKOS example missing language tag",
+      "guidance": "Add an appropriate language tag to each affected annotation value so class skos example missing language tag is language-aware.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_classSkosScopenoteMissingLanguageTag",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Class SKOS scope note missing language tag",
+      "guidance": "Add an appropriate language tag to each affected annotation value so class skos scope note missing language tag is language-aware.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_classSubclassCycle",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Class subclass cycle",
+      "guidance": "Remove or refactor subclass axioms that create a path from the class back to itself.",
+      "remediationEffort": "usually high"
+    },
+    {
+      "id": "criterion_classUniversalNotExactly1NamedParent",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Class universal not exactly one named parent",
+      "guidance": "Review and correct resources reported by the Class universal not exactly one named parent check.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_datatypepropertyCcoAcronymMissingLanguageTag",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Datatype property CCO acronym missing language tag",
+      "guidance": "Add an appropriate language tag to each affected annotation value so datatype property cco acronym missing language tag is language-aware.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_datatypepropertyCcoDefinitionSourceMissingLanguageTag",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Datatype property CCO definition source missing language tag",
+      "guidance": "Add an appropriate language tag to each affected annotation value so datatype property cco definition source missing language tag is language-aware.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_datatypepropertyCcoDoctrinalDefinitionMissingLanguageTag",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Datatype property CCO doctrinal definition missing language tag",
+      "guidance": "Add an appropriate language tag to each affected annotation value so datatype property cco doctrinal definition missing language tag is language-aware.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_datatypepropertyDuplicateSkosDefinition",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Datatype property duplicate SKOS definition",
+      "guidance": "Revise the duplicated SKOS definition so each affected resource has a distinct textual definition.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_datatypepropertyHasExactly1CcoIsCuratedInOntology",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Datatype property has exactly one CCO is curated in Ontology",
+      "guidance": "Ensure every affected resource has exactly one value satisfying this requirement.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_datatypepropertyHasExactly1RdfsLabelWithEnglishLanguageTag",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Datatype property has exactly one RDFS label with english language tag",
+      "guidance": "Ensure every affected resource has exactly one value satisfying this requirement.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_datatypepropertyHasExactly1SkosDefinitionWithEnglishLanguageTag",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Datatype property has exactly one SKOS definition with english language tag",
+      "guidance": "Ensure every affected resource has exactly one value satisfying this requirement.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_datatypepropertyMissingDctermsBibliographiccitation",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Datatype property missing DCTERMS bibliographic citation",
+      "guidance": "Add the missing assertion to every affected resource.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_datatypepropertyMissingSkosExample",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Datatype property missing SKOS example",
+      "guidance": "Add the missing assertion to every affected resource.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_datatypepropertyMissingSkosScopenote",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Datatype property missing SKOS scope note",
+      "guidance": "Add the missing assertion to every affected resource.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_datatypepropertyRdfsCommentMissingLanguageTag",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Datatype property RDFS comment missing language tag",
+      "guidance": "Add an appropriate language tag to each affected annotation value so datatype property rdfs comment missing language tag is language-aware.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_datatypepropertyRdfsSeealsoMissingLanguageTag",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Datatype property RDFS see also missing language tag",
+      "guidance": "Add an appropriate language tag to each affected annotation value so datatype property rdfs see also missing language tag is language-aware.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_datatypepropertySkosAltlabelMissingLanguageTag",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Datatype property SKOS alternative label missing language tag",
+      "guidance": "Add an appropriate language tag to each affected annotation value so datatype property skos alternative label missing language tag is language-aware.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_datatypepropertySkosExampleMissingLanguageTag",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Datatype property SKOS example missing language tag",
+      "guidance": "Add an appropriate language tag to each affected annotation value so datatype property skos example missing language tag is language-aware.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_datatypepropertySkosScopenoteMissingLanguageTag",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Datatype property SKOS scope note missing language tag",
+      "guidance": "Add an appropriate language tag to each affected annotation value so datatype property skos scope note missing language tag is language-aware.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_iriInDcelementsNamespaceButNotDefined",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "IRI in DC Elements namespace but not defined",
+      "guidance": "Replace the undefined vocabulary IRI with a term defined by that vocabulary, or define and use an appropriate project IRI.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_iriInDctermsNamespaceButNotDefined",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "IRI in DCTERMS namespace but not defined",
+      "guidance": "Replace the undefined vocabulary IRI with a term defined by that vocabulary, or define and use an appropriate project IRI.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_iriInOwlNamespaceButNotDefined",
+      "type": "requirement",
+      "weight": 1,
+      "label": "IRI in OWL namespace but not defined",
+      "guidance": "Replace the undefined vocabulary IRI with a term defined by that vocabulary, or define and use an appropriate project IRI.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_iriInRdfNamespaceButNotDefined",
+      "type": "requirement",
+      "weight": 1,
+      "label": "IRI in RDF namespace but not defined",
+      "guidance": "Replace the undefined vocabulary IRI with a term defined by that vocabulary, or define and use an appropriate project IRI.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_iriInRdfsNamespaceButNotDefined",
+      "type": "requirement",
+      "weight": 1,
+      "label": "IRI in RDFS namespace but not defined",
+      "guidance": "Replace the undefined vocabulary IRI with a term defined by that vocabulary, or define and use an appropriate project IRI.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_iriInSkosNamespaceButNotDefined",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "IRI in SKOS namespace but not defined",
+      "guidance": "Replace the undefined vocabulary IRI with a term defined by that vocabulary, or define and use an appropriate project IRI.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_namedindividualCcoAcronymMissingLanguageTag",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Named individual CCO acronym missing language tag",
+      "guidance": "Add an appropriate language tag to each affected annotation value so named individual cco acronym missing language tag is language-aware.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_namedindividualCcoDefinitionSourceMissingLanguageTag",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Named individual CCO definition source missing language tag",
+      "guidance": "Add an appropriate language tag to each affected annotation value so named individual cco definition source missing language tag is language-aware.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_namedindividualCcoDoctrinalDefinitionMissingLanguageTag",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Named individual CCO doctrinal definition missing language tag",
+      "guidance": "Add an appropriate language tag to each affected annotation value so named individual cco doctrinal definition missing language tag is language-aware.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_namedindividualDuplicateSkosDefinition",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Named individual duplicate SKOS definition",
+      "guidance": "Revise the duplicated SKOS definition so each affected resource has a distinct textual definition.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_namedindividualHasExactly1CcoIsCuratedInOntology",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Named individual has exactly one CCO is curated in Ontology",
+      "guidance": "Ensure every affected resource has exactly one value satisfying this requirement.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_namedindividualHasExactly1RdfsLabelWithEnglishLanguageTag",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Named individual has exactly one RDFS label with english language tag",
+      "guidance": "Ensure every affected resource has exactly one value satisfying this requirement.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_namedindividualHasExactly1SkosDefinitionWithEnglishLanguageTag",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Named individual has exactly one SKOS definition with english language tag",
+      "guidance": "Ensure every affected resource has exactly one value satisfying this requirement.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_namedindividualMissingDctermsBibliographiccitation",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Named individual missing DCTERMS bibliographic citation",
+      "guidance": "Add the missing assertion to every affected resource.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_namedindividualMissingOwlClassType",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Named individual missing OWL Class type",
+      "guidance": "Add the missing assertion to every affected resource.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_namedindividualMissingSkosExample",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Named individual missing SKOS example",
+      "guidance": "Add the missing assertion to every affected resource.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_namedindividualMissingSkosScopenote",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Named individual missing SKOS scope note",
+      "guidance": "Add the missing assertion to every affected resource.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_namedindividualRdfsCommentMissingLanguageTag",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Named individual RDFS comment missing language tag",
+      "guidance": "Add an appropriate language tag to each affected annotation value so named individual rdfs comment missing language tag is language-aware.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_namedindividualRdfsSeealsoMissingLanguageTag",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Named individual RDFS see also missing language tag",
+      "guidance": "Add an appropriate language tag to each affected annotation value so named individual rdfs see also missing language tag is language-aware.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_namedindividualSkosAltlabelMissingLanguageTag",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Named individual SKOS alternative label missing language tag",
+      "guidance": "Add an appropriate language tag to each affected annotation value so named individual skos alternative label missing language tag is language-aware.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_namedindividualSkosExampleMissingLanguageTag",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Named individual SKOS example missing language tag",
+      "guidance": "Add an appropriate language tag to each affected annotation value so named individual skos example missing language tag is language-aware.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_namedindividualSkosScopenoteMissingLanguageTag",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Named individual SKOS scope note missing language tag",
+      "guidance": "Add an appropriate language tag to each affected annotation value so named individual skos scope note missing language tag is language-aware.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_objectpropertyCcoAcronymMissingLanguageTag",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Object property CCO acronym missing language tag",
+      "guidance": "Add an appropriate language tag to each affected annotation value so object property cco acronym missing language tag is language-aware.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_objectpropertyCcoDefinitionSourceMissingLanguageTag",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Object property CCO definition source missing language tag",
+      "guidance": "Add an appropriate language tag to each affected annotation value so object property cco definition source missing language tag is language-aware.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_objectpropertyCcoDoctrinalDefinitionMissingLanguageTag",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Object property CCO doctrinal definition missing language tag",
+      "guidance": "Add an appropriate language tag to each affected annotation value so object property cco doctrinal definition missing language tag is language-aware.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_objectpropertyDuplicateSkosDefinition",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Object property duplicate SKOS definition",
+      "guidance": "Revise the duplicated SKOS definition so each affected resource has a distinct textual definition.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_objectpropertyHasExactly1CcoIsCuratedInOntology",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Object property has exactly one CCO is curated in Ontology",
+      "guidance": "Ensure every affected resource has exactly one value satisfying this requirement.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_objectpropertyHasExactly1RdfsLabelWithEnglishLanguageTag",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Object property has exactly one RDFS label with english language tag",
+      "guidance": "Ensure every affected resource has exactly one value satisfying this requirement.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_objectpropertyHasExactly1SkosDefinitionWithEnglishLanguageTag",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Object property has exactly one SKOS definition with english language tag",
+      "guidance": "Ensure every affected resource has exactly one value satisfying this requirement.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_objectpropertyMissingDctermsBibliographiccitation",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Object property missing DCTERMS bibliographic citation",
+      "guidance": "Add the missing assertion to every affected resource.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_objectpropertyMissingSkosExample",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Object property missing SKOS example",
+      "guidance": "Add the missing assertion to every affected resource.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_objectpropertyMissingSkosScopenote",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Object property missing SKOS scope note",
+      "guidance": "Add the missing assertion to every affected resource.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_objectpropertyRdfsCommentMissingLanguageTag",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Object property RDFS comment missing language tag",
+      "guidance": "Add an appropriate language tag to each affected annotation value so object property rdfs comment missing language tag is language-aware.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_objectpropertyRdfsSeealsoMissingLanguageTag",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Object property RDFS see also missing language tag",
+      "guidance": "Add an appropriate language tag to each affected annotation value so object property rdfs see also missing language tag is language-aware.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_objectpropertyReflexiveAndAsymmetric",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Object property reflexive and asymmetric",
+      "guidance": "Remove one of the contradictory object-property characteristics or remodel the affected relation.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_objectpropertyReflexiveAndIrreflexive",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Object property reflexive and irreflexive",
+      "guidance": "Remove one of the contradictory object-property characteristics or remodel the affected relation.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_objectpropertySkosAltlabelMissingLanguageTag",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Object property SKOS alternative label missing language tag",
+      "guidance": "Add an appropriate language tag to each affected annotation value so object property skos alternative label missing language tag is language-aware.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_objectpropertySkosExampleMissingLanguageTag",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Object property SKOS example missing language tag",
+      "guidance": "Add an appropriate language tag to each affected annotation value so object property skos example missing language tag is language-aware.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_objectpropertySkosScopenoteMissingLanguageTag",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Object property SKOS scope note missing language tag",
+      "guidance": "Add an appropriate language tag to each affected annotation value so object property skos scope note missing language tag is language-aware.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_objectpropertySymmetricAndAsymmetric",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Object property symmetric and asymmetric",
+      "guidance": "Remove one of the contradictory object-property characteristics or remodel the affected relation.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_objectpropertyTransitiveAndAsymmetric",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Object property transitive and asymmetric",
+      "guidance": "Refactor the affected object property axioms or restrictions so the ontology satisfies the OWL 2 DL simple-property restrictions.",
+      "remediationEffort": "usually high"
+    },
+    {
+      "id": "criterion_objectpropertyTransitiveAndCardinalityRestriction",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Object property transitive and cardinality restriction",
+      "guidance": "Refactor the affected object property axioms or restrictions so the ontology satisfies the OWL 2 DL simple-property restrictions.",
+      "remediationEffort": "usually high"
+    },
+    {
+      "id": "criterion_objectpropertyTransitiveAndFunctional",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Object property transitive and functional",
+      "guidance": "Refactor the affected object property axioms or restrictions so the ontology satisfies the OWL 2 DL simple-property restrictions.",
+      "remediationEffort": "usually high"
+    },
+    {
+      "id": "criterion_objectpropertyTransitiveAndHasselfRestriction",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Object property transitive and hasSelf restriction",
+      "guidance": "Refactor the affected object property axioms or restrictions so the ontology satisfies the OWL 2 DL simple-property restrictions.",
+      "remediationEffort": "usually high"
+    },
+    {
+      "id": "criterion_objectpropertyTransitiveAndInversefunctional",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Object property transitive and inverse-functional",
+      "guidance": "Refactor the affected object property axioms or restrictions so the ontology satisfies the OWL 2 DL simple-property restrictions.",
+      "remediationEffort": "usually high"
+    },
+    {
+      "id": "criterion_objectpropertyTransitiveAndIrreflexive",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Object property transitive and irreflexive",
+      "guidance": "Refactor the affected object property axioms or restrictions so the ontology satisfies the OWL 2 DL simple-property restrictions.",
+      "remediationEffort": "usually high"
+    },
+    {
+      "id": "criterion_objectpropertyTransitiveAndPropertydisjointwith",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Object property transitive and propertyDisjointWith",
+      "guidance": "Refactor the affected object property axioms or restrictions so the ontology satisfies the OWL 2 DL simple-property restrictions.",
+      "remediationEffort": "usually high"
+    },
+    {
+      "id": "criterion_ontologyDctermsAccessrightsMissingLanguageTag",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Ontology DCTERMS accessrights missing language tag",
+      "guidance": "Add an appropriate language tag to each affected annotation value so ontology dcterms accessrights missing language tag is language-aware.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_ontologyHasExactly1DctermsDescription",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Ontology has exactly one DCTERMS description",
+      "guidance": "Ensure every affected resource has exactly one value satisfying this requirement.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_ontologyHasExactly1DctermsLicense",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Ontology has exactly one DCTERMS license",
+      "guidance": "Ensure every affected resource has exactly one value satisfying this requirement.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_ontologyHasExactly1DctermsTitle",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Ontology has exactly one DCTERMS title",
+      "guidance": "Ensure every affected resource has exactly one value satisfying this requirement.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_ontologyHasExactly1Versioninfo",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Ontology has exactly one versionInfo",
+      "guidance": "Ensure every affected resource has exactly one value satisfying this requirement.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_ontologyHasExactly1Versioniri",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Ontology has exactly one versionIRI",
+      "guidance": "Ensure every affected resource has exactly one value satisfying this requirement.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_ontologyRdfsCommentMissingLanguageTag",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Ontology RDFS comment missing language tag",
+      "guidance": "Add an appropriate language tag to each affected annotation value so ontology rdfs comment missing language tag is language-aware.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_ontologySkosExampleMissingLanguageTag",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Ontology SKOS example missing language tag",
+      "guidance": "Add an appropriate language tag to each affected annotation value so ontology skos example missing language tag is language-aware.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_classDuplicateRdfsLabel",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Class duplicate RDFS label",
+      "guidance": "Revise the duplicated RDFS label so each affected resource has an unambiguous label.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_objectpropertyDuplicateRdfsLabel",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Object property duplicate RDFS label",
+      "guidance": "Revise the duplicated RDFS label so each affected resource has an unambiguous label.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_namedindividualDuplicateRdfsLabel",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Named individual duplicate RDFS label",
+      "guidance": "Revise the duplicated RDFS label so each affected resource has an unambiguous label.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_datatypepropertyDuplicateRdfsLabel",
+      "type": "requirement",
+      "weight": 1,
+      "label": "Datatype property duplicate RDFS label",
+      "guidance": "Revise the duplicated RDFS label so each affected resource has an unambiguous label.",
+      "remediationEffort": "usually low"
+    },
+    {
+      "id": "criterion_ontologyCcoCopyrightMissingLanguageTag",
+      "type": "recommendation",
+      "weight": 1,
+      "label": "Ontology CCO copyright missing language tag",
+      "guidance": "Add an appropriate language tag to each affected annotation value so ontology cco copyright missing language tag is language-aware.",
+      "remediationEffort": "usually low"
     }
   ]
 }

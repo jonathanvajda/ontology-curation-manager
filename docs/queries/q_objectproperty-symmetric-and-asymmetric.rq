@@ -1,0 +1,9 @@
+# OWL 2 Direct Semantics, section 2.3 (Object Property Expression Axioms):
+# https://www.w3.org/TR/owl2-direct-semantics/#Object_Property_Expression_Axioms
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+
+SELECT DISTINCT ?resource WHERE {
+  ?resource rdf:type owl:ObjectProperty, owl:SymmetricProperty, owl:AsymmetricProperty .
+}
+

@@ -6,11 +6,9 @@ PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX cco: <https://www.commoncoreontologies.org/>
 PREFIX obo: <http://purl.obolibrary.org/obo/>
 
-SELECT DISTINCT ?resource WHERE {
-  ?resource rdf:type owl:Class .
-  FILTER (isIRI(?resource))
-  FILTER NOT EXISTS { ?resource owl:deprecated true }
-  FILTER NOT EXISTS { ?resource skos:example ?value }
+SELECT DISTINCT ?resource ?otherResource WHERE {
+  ?resource rdf:type owl:ObjectProperty ; skos:definition ?definition .
+  ?otherResource skos:definition ?definition .
+  FILTER (isIRI(?resource) && isIRI(?otherResource) && STR(?resource) < STR(?otherResource))
 }
-# q_class-missing-skos-example.rq
-# Query to find a non-deprecated class with no skos:example
+
