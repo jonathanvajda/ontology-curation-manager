@@ -38,6 +38,7 @@ import {
   getTimestampForFilename,
   normalizeStringToAsciiSlug
 } from './shared/normalization-utils/index.js';
+import { renderStatusMessage } from './shared/ui-feedback/index.js';
 
 /** @typedef {import('./types.js').ExternalIriDependency} ExternalIriDependency */
 /** @typedef {import('./types.js').PreparedOntologyFile} PreparedOntologyFile */
@@ -109,9 +110,7 @@ const modalReturnFocusMap = new WeakMap();
  * @returns {void}
  */
 function setStatus(message) {
-  if (statusElement) {
-    statusElement.textContent = message;
-  }
+  renderStatusMessage(statusElement, { message, severity: 'info' }, { classPrefix: 'ocd-status' });
 }
 
 /**

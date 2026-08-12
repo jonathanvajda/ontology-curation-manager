@@ -24,6 +24,7 @@ import {
   writeNlpQaRunToProjectFolder
 } from './nlp-qa-storage.js';
 import { renderNlpQaOntologyTable, renderNlpQaScratchChecker } from './render-nlp-qa.js';
+import { renderStatusMessage } from './shared/ui-feedback/index.js';
 
 /** @typedef {import('./nlp-qa-ontology.js').NlpQaOntologyRow} NlpQaOntologyRow */
 /** @typedef {import('./nlp-qa-ontology.js').NlpQaCheckedOntologyRow} NlpQaCheckedOntologyRow */
@@ -92,9 +93,7 @@ function getNlpQaCompromiseRuntime() {
  * @returns {void}
  */
 function renderNlpQaStatusMessage(message) {
-  if (statusElement) {
-    statusElement.textContent = message;
-  }
+  renderStatusMessage(statusElement, { message, severity: 'info' }, { classPrefix: 'ocd-status' });
 }
 
 /**

@@ -55,6 +55,10 @@ import {
   createReportTextExportDescriptor,
   openPrintableHtmlDocument
 } from './shared/report-export/index.js';
+import {
+  applyThemePreference,
+  renderStatusMessage
+} from './shared/ui-feedback/index.js';
 
 /** @typedef {import('./types.js').BatchRunPayload} BatchRunPayload */
 /** @typedef {import('./types.js').EvaluatedReport} EvaluatedReport */
@@ -221,9 +225,7 @@ const SUPPLEMENTAL_IMPORT_ACCEPT_ATTR = createAcceptAttribute(Object.values(SUPP
  * @returns {void}
  */
 function setStatus(message) {
-  if (statusElement) {
-    statusElement.textContent = message;
-  }
+  renderStatusMessage(statusElement, { message, severity: 'info' }, { classPrefix: 'ocd-status' });
 }
 
 /**
@@ -481,6 +483,10 @@ function setTheme(themeClass, { persist = true } = {}) {
 
   appRoot.classList.remove('ocd-theme-light', 'ocd-theme-dark');
   appRoot.classList.add(themeClass);
+  applyThemePreference({
+    theme: themeClass === 'ocd-theme-dark' ? 'dark' : 'light',
+    rootElement: document.documentElement
+  });
   if (persist) {
     void writeThemePreference(themeClass);
   }
