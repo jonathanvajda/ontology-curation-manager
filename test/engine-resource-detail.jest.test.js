@@ -52,4 +52,34 @@ describe('engine resource detail extraction', () => {
       ])
     );
   });
+
+  test('extractOntologyMetadata reads ontology metadata through shared full-IRI record reader', async () => {
+    const { extractOntologyMetadata } = await import('../docs/app/engine.js');
+
+    const store = new N3.Store([
+      N3.DataFactory.quad(
+        N3.DataFactory.namedNode('http://example.org/ont'),
+        N3.DataFactory.namedNode('http://www.w3.org/1999/02/22-rdf-syntax-ns#type'),
+        N3.DataFactory.namedNode('http://www.w3.org/2002/07/owl#Ontology')
+      ),
+      N3.DataFactory.quad(
+        N3.DataFactory.namedNode('http://example.org/ont'),
+        N3.DataFactory.namedNode('http://purl.org/dc/terms/title'),
+        N3.DataFactory.literal('Example Ontology', 'en')
+      ),
+      N3.DataFactory.quad(
+        N3.DataFactory.namedNode('http://example.org/ont'),
+        N3.DataFactory.namedNode('http://www.w3.org/2002/07/owl#imports'),
+        N3.DataFactory.namedNode('http://example.org/imported')
+      )
+    ]);
+
+    expect(extractOntologyMetadata(store, 'example.ttl')).toMatchObject({
+      fileName: 'example.ttl',
+      ontologyIri: 'http://example.org/ont',
+      title: 'Example Ontology',
+      imports: ['http://example.org/imported'],
+      tripleCount: 3
+    });
+  });
 });

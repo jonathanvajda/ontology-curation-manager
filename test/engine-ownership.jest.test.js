@@ -77,10 +77,8 @@ describe('engine ownership helpers', () => {
   });
 
   test('extractExternalIriDependencies collects primary predicate/object IRIs and enriches from lookup store', async () => {
-    const {
-      extractExternalIriDependencies,
-      CCO_CURATED_IN_ONTOLOGY_IRI
-    } = await import('../docs/app/engine.js');
+    const { extractExternalIriDependencies } = await import('../docs/app/engine.js');
+    const { COMMON_NAMESPACE_IRIS } = await import('../docs/app/shared/namespace-registry/namespace-registry.js');
     const { namedNode, literal, quad } = N3.DataFactory;
 
     const primaryStore = new N3.Store([
@@ -104,12 +102,12 @@ describe('engine ownership helpers', () => {
     const lookupStore = new N3.Store(primaryStore.getQuads(null, null, null, null));
     lookupStore.addQuad(
       namedNode('http://example.org/import/B'),
-      namedNode('http://www.w3.org/2000/01/rdf-schema#label'),
+      namedNode(COMMON_NAMESPACE_IRIS.rdfs.label),
       literal('Imported B')
     );
     lookupStore.addQuad(
       namedNode('http://example.org/import/B'),
-      namedNode(CCO_CURATED_IN_ONTOLOGY_IRI),
+      namedNode(COMMON_NAMESPACE_IRIS.cceo.curatedIn),
       namedNode('http://example.org/import/ontology')
     );
 
@@ -127,7 +125,7 @@ describe('engine ownership helpers', () => {
         reasons: ['external-subject']
       }),
       expect.objectContaining({
-        iri: 'http://www.w3.org/2000/01/rdf-schema#subClassOf',
+        iri: COMMON_NAMESPACE_IRIS.rdfs.subClassOf,
         reasons: ['predicate']
       })
     ]));

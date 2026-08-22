@@ -7,20 +7,20 @@ import {
   buildPreflightSummaryFromStore,
   deriveDefaultIncludedNamespaces,
   extractResourceDetail,
-  OWL_DEPRECATED_IRI,
-  SUPPORTED_RDF_FORMATS,
-  XSD_BOOLEAN_IRI
+  SUPPORTED_RDF_FORMATS
 } from './engine.js';
 import { buildFailuresIndex } from './grader.js';
 import { inspectStore } from './report-model.js';
-import { saveRun, listRuns, getRun, deleteRun, getLastRunId } from './storage.js';
+import { saveRun, listRuns, getRun, deleteRun, getLastRunId, readThemePreference, writeThemePreference } from './storage.js';
 import { populateStandardFilter } from './criteria.js';
 import {
   escapeHtml,
-  cssEscapeAttr,
-  getTimestampForFileName,
-  safeFilePart
+  cssEscapeAttr
 } from './shared.js';
+import {
+  getTimestampForFilename,
+  normalizeStringToAsciiSlug
+} from './shared/normalization-utils/index.js';
 import { renderOntologyReport } from './render-ontology.js';
 import { renderDashboard, getBatchKey } from './render-dashboard.js';
 import {
@@ -43,9 +43,22 @@ import {
   buildHtmlReport,
   buildOntologyReportYaml,
   buildResultsCsv,
-  buildStandardDetailCsv,
-  downloadTextFile
+  buildStandardDetailCsv
 } from './report-export.js';
+import {
+  SUPPORTED_MIME_DESCRIPTORS,
+  getPreferredExtensionForMimeType
+} from './shared/format-registry/mime-registry.js';
+import { createAcceptAttribute, downloadTextFile } from './shared/browser-file-io/index.js';
+import { COMMON_NAMESPACE_IRIS } from './shared/namespace-registry/namespace-registry.js';
+import {
+  createReportTextExportDescriptor,
+  openPrintableHtmlDocument
+} from './shared/report-export/index.js';
+import {
+  applyThemePreference,
+  renderStatusMessage
+} from './shared/ui-feedback/index.js';
 
 /** @typedef {import('./types.js').BatchRunPayload} BatchRunPayload */
 /** @typedef {import('./types.js').EvaluatedReport} EvaluatedReport */
@@ -58,18 +71,20 @@ import {
 /** @typedef {import('./types.js').PerResourceCurationRow} PerResourceCurationRow */
 /** @typedef {import('./types.js').QueryResultRow} QueryResultRow */
 /** @typedef {import('./types.js').ResourceDetail} ResourceDetail */
+
 /** @typedef {import('./types.js').SavedRun} SavedRun */
 /** @typedef {import('./types.js').StagedResourceEdit} StagedResourceEdit */
 /** @typedef {import('./types.js').SupplementalOntologyFile} SupplementalOntologyFile */
 /** @typedef {import('./types.js').UiStateSnapshot} UiStateSnapshot */
+
 
 /**
  * @typedef {Object} DownloadAction
  * @property {string} label
  * @property {() => boolean} isAvailable
  * @property {() => string} build
- * @property {() => string} getFileName
- * @property {string} mimeType
+ * @property {() => string} getBaseFileName
+ * @property {string} formatKey
  */
 
 /** @type {HTMLInputElement | null} */
@@ -199,7 +214,9 @@ let queryProgressEntries = [];
 /** @type {boolean} */
 let preflightCollapsed = false;
 
-const SUPPLEMENTAL_IMPORT_ACCEPT_ATTR = '.ttl,.turtle,.rdf,.owl,.xml,.nt,.ntriples,.nq,.trig,.n3,.jsonld,.json-ld';
+const SUPPLEMENTAL_IMPORT_ACCEPT_ATTR = createAcceptAttribute(Object.values(SUPPORTED_MIME_DESCRIPTORS), {
+  category: 'rdf'
+});
 
 /**
  * Sets the status text.
@@ -208,9 +225,7 @@ const SUPPLEMENTAL_IMPORT_ACCEPT_ATTR = '.ttl,.turtle,.rdf,.owl,.xml,.nt,.ntripl
  * @returns {void}
  */
 function setStatus(message) {
-  if (statusElement) {
-    statusElement.textContent = message;
-  }
+  renderStatusMessage(statusElement, { message, severity: 'info' }, { classPrefix: 'ocd-status' });
 }
 
 /**
@@ -458,16 +473,23 @@ async function refreshSavedRunsUi() {
  * Sets the app theme.
  *
  * @param {'ocd-theme-light' | 'ocd-theme-dark'} themeClass
+ * @param {{persist?: boolean}} [options]
  * @returns {void}
  */
-function setTheme(themeClass) {
+function setTheme(themeClass, { persist = true } = {}) {
   if (!appRoot) {
     return;
   }
 
   appRoot.classList.remove('ocd-theme-light', 'ocd-theme-dark');
   appRoot.classList.add(themeClass);
-  localStorage.setItem('ocd-theme', themeClass);
+  applyThemePreference({
+    theme: themeClass === 'ocd-theme-dark' ? 'dark' : 'light',
+    rootElement: document.documentElement
+  });
+  if (persist) {
+    void writeThemePreference(themeClass);
+  }
 }
 
 /**
@@ -485,14 +507,14 @@ function toggleTheme() {
 }
 
 /**
- * Restores the theme from local storage.
+ * Restores the theme from shared app settings.
  *
- * @returns {void}
+ * @returns {Promise<void>}
  */
-function initTheme() {
-  const savedTheme = localStorage.getItem('ocd-theme');
+async function initTheme() {
+  const savedTheme = await readThemePreference();
   if (savedTheme === 'ocd-theme-dark' || savedTheme === 'ocd-theme-light') {
-    setTheme(savedTheme);
+    setTheme(savedTheme, { persist: false });
   }
 }
 
@@ -1215,31 +1237,31 @@ function stageBulkEdit() {
 
   for (const resourceIri of selectedResources) {
     if (statusValue) {
-      stageReplacement(resourceIri, 'http://purl.obolibrary.org/obo/IAO_0000114', [{
+      stageReplacement(resourceIri, COMMON_NAMESPACE_IRIS.iao.curationStatus, [{
         termType: 'NamedNode',
         value: statusValue
       }]);
     }
     if (curatorNote) {
-      stageReplacement(resourceIri, 'http://purl.obolibrary.org/obo/IAO_0000232', [{
+      stageReplacement(resourceIri, COMMON_NAMESPACE_IRIS.iao.curatorNote, [{
         termType: 'Literal',
         value: curatorNote
       }]);
     }
     if (obsolescenceReason) {
-      stageReplacement(resourceIri, 'http://purl.obolibrary.org/obo/IAO_0000231', [{
+      stageReplacement(resourceIri, COMMON_NAMESPACE_IRIS.iao.obsolescenceReason, [{
         termType: 'Literal',
         value: obsolescenceReason
       }]);
     }
     if (termReplacedBy) {
-      stageReplacement(resourceIri, 'http://purl.obolibrary.org/obo/IAO_0100001', [{
+      stageReplacement(resourceIri, COMMON_NAMESPACE_IRIS.iao.termReplacedBy, [{
         termType: 'NamedNode',
         value: termReplacedBy
       }]);
     }
     if (commentValue) {
-      stageReplacement(resourceIri, 'http://www.w3.org/2000/01/rdf-schema#comment', [{
+      stageReplacement(resourceIri, COMMON_NAMESPACE_IRIS.rdfs.comment, [{
         termType: 'Literal',
         value: commentValue
       }]);
@@ -1274,7 +1296,7 @@ function stageSuggestedStatusesForSelection() {
       continue;
     }
 
-    stageReplacement(resourceIri, 'http://purl.obolibrary.org/obo/IAO_0000114', [{
+    stageReplacement(resourceIri, COMMON_NAMESPACE_IRIS.iao.curationStatus, [{
       termType: 'NamedNode',
       value: row.statusIri
     }]);
@@ -1338,7 +1360,7 @@ function stageResourcePanelEdits(resourceIri) {
 
   let stagedCount = 0;
   if (statusSelect instanceof HTMLSelectElement && statusSelect.value) {
-    stageReplacement(resourceIri, 'http://purl.obolibrary.org/obo/IAO_0000114', [{
+    stageReplacement(resourceIri, COMMON_NAMESPACE_IRIS.iao.curationStatus, [{
       termType: 'NamedNode',
       value: statusSelect.value
     }]);
@@ -1353,8 +1375,8 @@ function stageResourcePanelEdits(resourceIri) {
     const predicateIri = input.getAttribute('data-predicate-iri') || '';
     const value = String(input.value || '').trim();
     const isDeprecationOnlyField =
-      predicateIri === 'http://purl.obolibrary.org/obo/IAO_0000231' ||
-      predicateIri === 'http://purl.obolibrary.org/obo/IAO_0100001';
+      predicateIri === COMMON_NAMESPACE_IRIS.iao.obsolescenceReason ||
+      predicateIri === COMMON_NAMESPACE_IRIS.iao.termReplacedBy;
 
     if (
       isDeprecationOnlyField &&
@@ -1368,17 +1390,17 @@ function stageResourcePanelEdits(resourceIri) {
     }
 
     stageReplacement(resourceIri, predicateIri, [{
-      termType: predicateIri === 'http://purl.obolibrary.org/obo/IAO_0100001' ? 'NamedNode' : 'Literal',
+      termType: predicateIri === COMMON_NAMESPACE_IRIS.iao.termReplacedBy ? 'NamedNode' : 'Literal',
       value
     }]);
     stagedCount += 1;
   }
 
   if (deprecateToggle instanceof HTMLInputElement && deprecateToggle.checked) {
-    stageReplacement(resourceIri, OWL_DEPRECATED_IRI, [{
+    stageReplacement(resourceIri, COMMON_NAMESPACE_IRIS.owl.deprecated, [{
       termType: 'Literal',
       value: 'true',
-      datatypeIri: XSD_BOOLEAN_IRI
+      datatypeIri: COMMON_NAMESPACE_IRIS.xsd.boolean
     }]);
     stagedCount += 1;
   }
@@ -1436,7 +1458,7 @@ function stageOntologyEdits(ontologyIri) {
     }
 
     stageReplacement(ontologyIri, predicateIri, [{
-      termType: predicateIri === 'http://purl.obolibrary.org/obo/IAO_0100001' ? 'NamedNode' : 'Literal',
+      termType: predicateIri === COMMON_NAMESPACE_IRIS.iao.termReplacedBy ? 'NamedNode' : 'Literal',
       value
     }]);
     stagedCount += 1;
@@ -1572,6 +1594,9 @@ async function rerunEditSessionInspection() {
  * @returns {string}
  */
 function getFileExtensionForFormat(format) {
+  const preferred = getPreferredExtensionForMimeType(format);
+  if (preferred?.ok) return `.${preferred.value}`;
+
   switch (format) {
     case SUPPORTED_RDF_FORMATS.TURTLE:
       return '.ttl';
@@ -1593,16 +1618,6 @@ function getFileExtensionForFormat(format) {
 }
 
 /**
- * Returns a MIME type for one RDF format.
- *
- * @param {string} format
- * @returns {string}
- */
-function getMimeTypeForFormat(format) {
-  return `${format};charset=utf-8`;
-}
-
-/**
  * Exports the edited primary ontology.
  *
  * @returns {Promise<void>}
@@ -1621,11 +1636,12 @@ async function exportEditedOntology() {
 
   try {
     const serialized = await exportPrimaryOntology(editedPrimary, /** @type {any} */ (targetFormat));
-    const fileStem = safeFilePart(
-      editedPrimary.fileName.replace(/\.[^.]+$/, '') || 'ontology'
+    const fileStem = normalizeStringToAsciiSlug(
+      editedPrimary.fileName.replace(/\.[^.]+$/, '') || 'ontology',
+      { separator: '_' }
     ) || 'ontology';
-    const fileName = `${fileStem}_edited_${getTimestampForFileName()}${getFileExtensionForFormat(targetFormat)}`;
-    downloadTextFile(serialized, fileName, getMimeTypeForFormat(targetFormat));
+    const fileName = `${fileStem}_edited_${getTimestampForFilename()}${getFileExtensionForFormat(targetFormat)}`;
+    downloadTextFile(fileName, serialized, { mimeType: targetFormat });
     setStatus(`Exported edited ontology as ${fileName}.`);
   } catch (error) {
     console.error('Error exporting edited ontology:', error);
@@ -1858,30 +1874,30 @@ const downloadActions = {
     label: 'Results CSV',
     isAvailable: () => Array.isArray(lastResults) && lastResults.length > 0,
     build: () => buildResultsCsv(lastResults, lastOntologyReport?.ontologyIri || ''),
-    getFileName: () => `ocd-results_${getTimestampForFileName()}.csv`,
-    mimeType: 'text/csv;charset=utf-8'
+    getBaseFileName: () => 'ocd-results',
+    formatKey: 'csv'
   },
   ontologyYaml: {
     label: 'Ontology Report YAML',
     isAvailable: () => !!lastOntologyReport,
     build: () => buildOntologyReportYaml(lastOntologyReport),
-    getFileName: () => `ocd-ontology-report_${getTimestampForFileName()}.yaml`,
-    mimeType: 'text/yaml;charset=utf-8'
+    getBaseFileName: () => 'ocd-ontology-report',
+    formatKey: 'yaml'
   },
   htmlReport: {
     label: 'HTML Report',
     isAvailable: () =>
       !!lastOntologyReport || (Array.isArray(lastResults) && lastResults.length > 0),
     build: () => buildHtmlReport(getExportState()),
-    getFileName: () => `ocd-report_${getTimestampForFileName()}.html`,
-    mimeType: 'text/html;charset=utf-8'
+    getBaseFileName: () => 'ocd-report',
+    formatKey: 'html'
   },
   filteredResourcesCsv: {
     label: 'Filtered Resources CSV',
     isAvailable: () => Array.isArray(lastPerResource) && lastPerResource.length > 0,
     build: () => buildFilteredResourcesCsv(lastPerResource),
-    getFileName: () => `ocd-filtered-resources_${getTimestampForFileName()}.csv`,
-    mimeType: 'text/csv;charset=utf-8'
+    getBaseFileName: () => 'ocd-filtered-resources',
+    formatKey: 'csv'
   },
   standardDetailCsv: {
     label: 'Standard Detail CSV',
@@ -1890,16 +1906,16 @@ const downloadActions = {
       Array.isArray(lastResults) &&
       lastResults.length > 0,
     build: () => buildStandardDetailCsv(lastSelectedCriterionId, lastResults),
-    getFileName: () =>
-      `ocd-standard-detail_${safeFilePart(lastSelectedCriterionId || 'standard')}_${getTimestampForFileName()}.csv`,
-    mimeType: 'text/csv;charset=utf-8'
+    getBaseFileName: () =>
+      `ocd-standard-detail_${normalizeStringToAsciiSlug(lastSelectedCriterionId || 'standard', { separator: '_' })}`,
+    formatKey: 'csv'
   },
   batchSummaryCsv: {
     label: 'Batch Summary CSV',
     isAvailable: () => Array.isArray(lastBatchReports) && lastBatchReports.length > 0,
     build: () => buildBatchSummaryCsv(lastBatchReports),
-    getFileName: () => `ocd-batch-summary_${getTimestampForFileName()}.csv`,
-    mimeType: 'text/csv;charset=utf-8'
+    getBaseFileName: () => 'ocd-batch-summary',
+    formatKey: 'csv'
   }
 };
 
@@ -1981,7 +1997,12 @@ function handleDownloadSelected() {
   }
 
   try {
-    downloadTextFile(action.build(), action.getFileName(), action.mimeType);
+    const descriptor = createReportTextExportDescriptor({
+      text: action.build(),
+      formatKey: action.formatKey,
+      baseFileName: action.getBaseFileName()
+    });
+    downloadTextFile(descriptor.fileName, descriptor.text, { mimeType: descriptor.mimeType });
     setStatus(`Downloaded ${action.label}.`);
   } catch (error) {
     console.error(error);
@@ -2001,29 +2022,13 @@ function handlePrintReport() {
     return;
   }
 
-  const printWindow = window.open('', '_blank');
-  if (!printWindow) {
-    setStatus('Print window was blocked. Allow pop-ups and try again.');
-    return;
+  try {
+    openPrintableHtmlDocument(buildHtmlReport(getExportState()));
+    setStatus('Opened print view.');
+  } catch (error) {
+    console.error(error);
+    setStatus(error instanceof Error ? error.message : 'Print failed.');
   }
-
-  const reportHtml = buildHtmlReport(getExportState());
-  const printHtml = reportHtml.replace(
-    '</body>',
-    `<script>
-      window.addEventListener('load', () => {
-        window.print();
-      });
-      window.addEventListener('afterprint', () => {
-        window.close();
-      });
-    </script></body>`
-  );
-
-  printWindow.document.open();
-  printWindow.document.write(printHtml);
-  printWindow.document.close();
-  setStatus('Opened print view.');
 }
 
 /**
@@ -2223,7 +2228,7 @@ async function runInspectionFromSelectedFiles() {
  * @returns {Promise<void>}
  */
 async function initializeApp() {
-  initTheme();
+  await initTheme();
   renderPreflightUi();
   updateRunButtonState();
   updateCurationFiltersVisibility();

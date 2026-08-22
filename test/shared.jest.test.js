@@ -1,12 +1,11 @@
 import { describe, expect, test } from '@jest/globals';
 import {
   cssEscapeAttr,
-  csvEscape,
   escapeHtml,
-  getReportStandards,
-  rowsToCsv,
-  safeFilePart
+  getReportStandards
 } from '../docs/app/shared.js';
+import { normalizeStringToAsciiSlug } from '../docs/app/shared/normalization-utils/index.js';
+import { escapeDelimitedCell, serializeDelimitedRows } from '../docs/app/shared/tabular-io/index.js';
 
 describe('shared helpers', () => {
   test('escapeHtml escapes reserved HTML characters', () => {
@@ -17,13 +16,13 @@ describe('shared helpers', () => {
     expect(cssEscapeAttr('a"b')).toBe('a\\"b');
   });
 
-  test('safeFilePart normalizes unsafe file-name fragments', () => {
-    expect(safeFilePart('  ontology report: v1/owl  ')).toBe('ontology_report_v1_owl');
+  test('promoted ASCII slug normalizer covers legacy file-name fragments', () => {
+    expect(normalizeStringToAsciiSlug('  ontology report: v1/owl  ', { separator: '_' })).toBe('ontology_report_v1_owl');
   });
 
-  test('csvEscape and rowsToCsv preserve commas, quotes, and newlines', () => {
-    expect(csvEscape('a,"b"')).toBe('"a,""b"""');
-    expect(rowsToCsv([['id', 'value'], ['1', 'line 1\nline 2']])).toBe(
+  test('shared tabular-io CSV helpers preserve commas, quotes, and newlines', () => {
+    expect(escapeDelimitedCell('a,"b"', { delimiter: ',' })).toBe('"a,""b"""');
+    expect(serializeDelimitedRows([['id', 'value'], ['1', 'line 1\nline 2']], { trailingNewline: true })).toBe(
       'id,value\n1,"line 1\nline 2"\n'
     );
   });

@@ -1,91 +1,123 @@
-// eslint.config.js (ESLint v9 flat config)
-import js from "@eslint/js";
-import importPlugin from "eslint-plugin-import";
+const browserGlobals = {
+  AbortController: 'readonly',
+  Blob: 'readonly',
+  BroadcastChannel: 'readonly',
+  CustomEvent: 'readonly',
+  DOMParser: 'readonly',
+  DataTransfer: 'readonly',
+  Element: 'readonly',
+  Event: 'readonly',
+  File: 'readonly',
+  FileReader: 'readonly',
+  FormData: 'readonly',
+  HTMLButtonElement: 'readonly',
+  HTMLInputElement: 'readonly',
+  HTMLSelectElement: 'readonly',
+  HTMLTableRowElement: 'readonly',
+  HTMLTextAreaElement: 'readonly',
+  HTMLElement: 'readonly',
+  IDBDatabase: 'readonly',
+  IDBFactory: 'readonly',
+  IDBObjectStore: 'readonly',
+  IDBRequest: 'readonly',
+  IDBTransaction: 'readonly',
+  MutationObserver: 'readonly',
+  Node: 'readonly',
+  Request: 'readonly',
+  Response: 'readonly',
+  TextDecoder: 'readonly',
+  TextEncoder: 'readonly',
+  URL: 'readonly',
+  URLSearchParams: 'readonly',
+  XMLSerializer: 'readonly',
+  alert: 'readonly',
+  btoa: 'readonly',
+  caches: 'readonly',
+  clearInterval: 'readonly',
+  clearTimeout: 'readonly',
+  confirm: 'readonly',
+  console: 'readonly',
+  crypto: 'readonly',
+  customElements: 'readonly',
+  document: 'readonly',
+  fetch: 'readonly',
+  getComputedStyle: 'readonly',
+  global: 'readonly',
+  globalThis: 'readonly',
+  indexedDB: 'readonly',
+  localStorage: 'readonly',
+  location: 'readonly',
+  navigator: 'readonly',
+  performance: 'readonly',
+  queueMicrotask: 'readonly',
+  requestAnimationFrame: 'readonly',
+  require: 'readonly',
+  self: 'readonly',
+  sessionStorage: 'readonly',
+  setImmediate: 'readonly',
+  setInterval: 'readonly',
+  setTimeout: 'readonly',
+  structuredClone: 'readonly',
+  window: 'readonly'
+};
+
+const vendorGlobals = {
+  Comunica: 'readonly',
+  N3: 'readonly',
+  Tabulator: 'readonly',
+  jsonld: 'readonly',
+  $rdf: 'readonly'
+};
+
+const testGlobals = {
+  afterAll: 'readonly',
+  afterEach: 'readonly',
+  beforeAll: 'readonly',
+  beforeEach: 'readonly',
+  describe: 'readonly',
+  expect: 'readonly',
+  jest: 'readonly',
+  test: 'readonly'
+};
 
 export default [
-  js.configs.recommended,
   {
     ignores: [
-      "docs/app/comunica-browser.js",
-      "docs/app/n3.min.js",
-      "docs/app/rdflib.min.js",
-      "docs/app/jsonld.min.js"
+      'coverage/**',
+      'node_modules/**',
+      'docs/app/shared/vendor/**',
+      '**/*.min.js',
+      '**/(deprecated)_*.js'
     ]
   },
-
   {
-    files: ["**/*.{js,mjs}"],
+    files: ['**/*.{js,mjs}'],
     languageOptions: {
-      ecmaVersion: "latest",
-      sourceType: "module"
-    },
-    plugins: {
-      import: importPlugin
-    },
-    rules: {
-      // Catches duplicate function declarations in the same scope/file
-      "no-redeclare": "error",
-
-      // Extra hygiene (optional)
-      "no-shadow": "warn",
-      "no-unused-vars": ["warn", { argsIgnorePattern: "^_" }]
-    }
-  },
-  {
-    files: ["docs/app/**/*.js"],
-    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'module',
       globals: {
-        Blob: "readonly",
-        Document: "readonly",
-        Element: "readonly",
-        File: "readonly",
-        HTMLButtonElement: "readonly",
-        HTMLElement: "readonly",
-        HTMLInputElement: "readonly",
-        HTMLSelectElement: "readonly",
-        HTMLTextAreaElement: "readonly",
-        HTMLTableRowElement: "readonly",
-        IDBDatabase: "readonly",
-        IDBObjectStore: "readonly",
-        IDBRequest: "readonly",
-        IDBTransaction: "readonly",
-        URL: "readonly",
-        console: "readonly",
-        document: "readonly",
-        fetch: "readonly",
-        indexedDB: "readonly",
-        localStorage: "readonly",
-        window: "readonly"
+        ...browserGlobals,
+        ...vendorGlobals,
+        process: 'readonly'
       }
     },
-    plugins: {
-      import: importPlugin
-    },
     rules: {
-      // Catches duplicate function declarations in the same scope/file
-      "no-redeclare": "error",
-
-      // Extra hygiene (optional)
-      "no-shadow": "warn",
-      "no-unused-vars": ["warn", { argsIgnorePattern: "^_" }]
+      'no-undef': 'error',
+      'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }]
     }
   },
   {
-    files: ["test/**/*.js"],
+    files: ['tests/**/*.js', '**/__tests__/**/*.js', '**/*.test.js'],
     languageOptions: {
-      globals: {
-        console: "readonly",
-        process: "readonly",
-        setTimeout: "readonly"
-      }
+      globals: testGlobals
     }
   },
   {
-    files: ["docs/queries/optional-manifest.js"],
+    files: ['docs/queries/optional-manifest.js'],
     languageOptions: {
-      sourceType: "script",
+      sourceType: 'script',
       globals: {
-        DATA: "writable"
+        DATA: 'writable'
       }
     }
   }

@@ -3,17 +3,13 @@
 
 import { CURATION_STATUS_IRIS } from './grader.js';
 import {
-  OBO_IAO_0000231_IRI,
-  OBO_IAO_0000232_IRI,
-  OBO_IAO_0100001_IRI,
-  RDFS_COMMENT_IRI
+  parseOntologyInput,
+  serializeOntologyStore
 } from './engine.js';
-import {
-  parseRdfInput,
-  serializeRdfStore
-} from './rdf-io.js';
+import { COMMON_NAMESPACE_IRIS } from './shared/namespace-registry/namespace-registry.js';
+import { createUuid } from './shared/ontology-utils/index.js';
 
-/** @typedef {import('./rdf-io.js').RdfFormat} RdfFormat */
+/** @typedef {'text/turtle' | 'application/n-triples' | 'application/n-quads' | 'application/trig' | 'text/n3' | 'application/ld+json' | 'application/rdf+xml'} RdfFormat */
 /** @typedef {import('./types.js').EditableObjectValue} EditableObjectValue */
 /** @typedef {import('./types.js').ParsedOntologyState} ParsedOntologyState */
 /** @typedef {import('./types.js').StagedResourceEdit} StagedResourceEdit */
@@ -21,11 +17,12 @@ import {
 /** @typedef {{ Store?: any, DataFactory?: any }} N3Runtime */
 /** @typedef {Window & typeof globalThis & { N3?: N3Runtime }} RuntimeWithN3 */
 
+
 export const EDITABLE_NOTE_PREDICATES = Object.freeze([
-  OBO_IAO_0000232_IRI,
-  OBO_IAO_0000231_IRI,
-  OBO_IAO_0100001_IRI,
-  RDFS_COMMENT_IRI
+  COMMON_NAMESPACE_IRIS.iao.curatorNote,
+  COMMON_NAMESPACE_IRIS.iao.obsolescenceReason,
+  COMMON_NAMESPACE_IRIS.iao.termReplacedBy,
+  COMMON_NAMESPACE_IRIS.rdfs.comment
 ]);
 
 export const KNOWN_CURATION_STATUS_OPTIONS = Object.freeze([
@@ -45,7 +42,7 @@ export const KNOWN_CURATION_STATUS_OPTIONS = Object.freeze([
  * @returns {Promise<ParsedOntologyState>}
  */
 export async function createParsedOntologyState(text, fileName) {
-  const parsed = await parseRdfInput(text, fileName);
+  const parsed = await parseOntologyInput(text, fileName);
   return {
     ...parsed,
     fileName,
@@ -93,7 +90,16 @@ function getDataFactory() {
  */
 export function cloneStore(store) {
   const Store = getStoreConstructor();
-  return new Store(store?.getQuads ? store.getQuads(null, null, null, null) : []);
+  const cloned = new Store();
+  const quads = store?.getQuads ? store.getQuads(null, null, null, null) : [];
+  if (typeof cloned.addQuads === 'function') {
+    cloned.addQuads(quads);
+  } else {
+    for (const quad of quads) {
+      cloned.addQuad(quad);
+    }
+  }
+  return cloned;
 }
 
 /**
@@ -308,7 +314,7 @@ export function applyStagedEditsToStore(store, stagedEdits) {
  */
 export async function exportPrimaryOntology(primaryOntology, format) {
   const targetFormat = format || primaryOntology?.sourceFormat;
-  return serializeRdfStore(primaryOntology.store, targetFormat, {
+  return serializeOntologyStore(primaryOntology.store, targetFormat, {
     prefixes: primaryOntology?.prefixes || {},
     baseIri: primaryOntology?.baseIri || null
   });
@@ -320,5 +326,5 @@ export async function exportPrimaryOntology(primaryOntology, format) {
  * @returns {string}
  */
 export function createStagedEditId() {
-  return `edit-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  return `edit-${createUuid()}`;
 }

@@ -3,11 +3,12 @@
 
 import { getStandardDetailEntries } from './render-standards.js';
 import { getCriterionDefinition } from './criteria.js';
+import { getReportStandards } from './shared.js';
+import { serializeDelimitedRows } from './shared/tabular-io/index.js';
 import {
-  escapeHtml,
-  getReportStandards,
-  rowsToCsv
-} from './shared.js';
+  escapeHtmlText,
+  serializeReportValueToYaml
+} from './shared/report-export/index.js';
 
 /** @typedef {import('./types.js').EvaluatedReport} EvaluatedReport */
 /** @typedef {import('./types.js').ExportState} ExportState */
@@ -15,28 +16,6 @@ import {
 /** @typedef {import('./types.js').OntologyReport} OntologyReport */
 /** @typedef {import('./types.js').PerResourceCurationRow} PerResourceCurationRow */
 /** @typedef {import('./types.js').QueryResultRow} QueryResultRow */
-
-/**
- * Downloads a text file.
- *
- * @param {string} text
- * @param {string} fileName
- * @param {string} mimeType
- * @returns {void}
- */
-export function downloadTextFile(text, fileName, mimeType) {
-  const blob = new Blob([text], { type: mimeType || 'text/plain' });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-
-  anchor.href = url;
-  anchor.download = fileName;
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-
-  URL.revokeObjectURL(url);
-}
 
 /**
  * Serializes result rows as CSV.
@@ -69,7 +48,7 @@ export function buildResultsCsv(results, ontologyIri) {
     ]);
   }
 
-  return rowsToCsv(rows);
+  return serializeDelimitedRows(rows, { delimiter: ',', trailingNewline: true });
 }
 
 /**
@@ -83,19 +62,16 @@ export function buildOntologyReportYaml(report) {
     return '# No ontology report\n';
   }
 
-  const lines = [];
-  lines.push(`ontologyIri: "${String(report.ontologyIri).replace(/"/g, '\\"')}"`);
-  lines.push(`status: "${String(report.statusLabel).replace(/"/g, '\\"')}"`);
-  lines.push('standards:');
-
-  for (const standard of getReportStandards(report)) {
-    lines.push(`  - id: "${String(standard.id).replace(/"/g, '\\"')}"`);
-    lines.push(`    type: "${String(standard.type).replace(/"/g, '\\"')}"`);
-    lines.push(`    status: "${String(standard.status).replace(/"/g, '\\"')}"`);
-    lines.push(`    failedResourcesCount: ${standard.failedResourcesCount || 0}`);
-  }
-
-  return lines.join('\n') + '\n';
+  return serializeReportValueToYaml({
+    ontologyIri: report.ontologyIri,
+    status: report.statusLabel,
+    standards: getReportStandards(report).map((standard) => ({
+      id: standard.id,
+      type: standard.type,
+      status: standard.status,
+      failedResourcesCount: standard.failedResourcesCount || 0
+    }))
+  });
 }
 
 /**
@@ -137,7 +113,7 @@ export function buildFilteredResourcesCsv(perResourceRows) {
     ]);
   }
 
-  return rowsToCsv(rows);
+  return serializeDelimitedRows(rows, { delimiter: ',', trailingNewline: true });
 }
 
 /**
@@ -167,7 +143,7 @@ export function buildStandardDetailCsv(criterionId, results) {
     ]);
   }
 
-  return rowsToCsv(rows);
+  return serializeDelimitedRows(rows, { delimiter: ',', trailingNewline: true });
 }
 
 /**
@@ -227,7 +203,7 @@ export function buildBatchSummaryCsv(batchReports) {
     ]);
   }
 
-  return rowsToCsv(rows);
+  return serializeDelimitedRows(rows, { delimiter: ',', trailingNewline: true });
 }
 
 /**
@@ -269,31 +245,31 @@ export function buildHtmlReport(state) {
   html += '</head><body>';
 
   html += '<h1>Ontology Checks Report</h1>';
-  html += `<div class="meta">Created: <span class="mono">${escapeHtml(createdAt)}</span></div>`;
-  html += `<div class="meta">Results rows: <span class="mono">${escapeHtml(resultsCount)}</span></div>`;
+  html += `<div class="meta">Created: <span class="mono">${escapeHtmlText(createdAt)}</span></div>`;
+  html += `<div class="meta">Results rows: <span class="mono">${escapeHtmlText(resultsCount)}</span></div>`;
 
   html += '<div class="card">';
   html += '<h2>View state</h2>';
-  html += `<div class="meta">Curation status filter: <span class="mono">${escapeHtml(state.statusFilter || 'All')}</span></div>`;
-  html += `<div class="meta">Fails standard filter: <span class="mono">${escapeHtml(state.standardFilter || 'Any')}</span></div>`;
-  html += `<div class="meta">Selected standard: <span class="mono">${escapeHtml(selectedCriterionId || '(none)')}</span></div>`;
-  html += `<div class="meta">Included namespaces: <span class="mono">${escapeHtml((inspectionScope?.includedNamespaces || []).join(', ') || 'All')}</span></div>`;
+  html += `<div class="meta">Curation status filter: <span class="mono">${escapeHtmlText(state.statusFilter || 'All')}</span></div>`;
+  html += `<div class="meta">Fails standard filter: <span class="mono">${escapeHtmlText(state.standardFilter || 'Any')}</span></div>`;
+  html += `<div class="meta">Selected standard: <span class="mono">${escapeHtmlText(selectedCriterionId || '(none)')}</span></div>`;
+  html += `<div class="meta">Included namespaces: <span class="mono">${escapeHtmlText((inspectionScope?.includedNamespaces || []).join(', ') || 'All')}</span></div>`;
   html += '</div>';
 
   html += '<div class="card"><h2>Ontology metadata</h2>';
   if (!metadata) {
     html += '<p>No ontology metadata loaded.</p>';
   } else {
-    html += `<div class="meta">File: <span class="mono">${escapeHtml(metadata.fileName || '')}</span></div>`;
-    html += `<div class="meta">Ontology IRI: <span class="mono">${escapeHtml(metadata.ontologyIri || '')}</span></div>`;
-    html += `<div class="meta">Title: ${escapeHtml(metadata.title || 'Not found')}</div>`;
-    html += `<div class="meta">Version IRI: <span class="mono">${escapeHtml(metadata.versionIri || 'Not found')}</span></div>`;
-    html += `<div class="meta">Version info: <span class="mono">${escapeHtml(metadata.versionInfo || 'Not found')}</span></div>`;
-    html += `<div class="meta">License: <span class="mono">${escapeHtml(metadata.license || 'Not found')}</span></div>`;
-    html += `<div class="meta">Access rights: <span class="mono">${escapeHtml(metadata.accessRights || 'Not found')}</span></div>`;
-    html += `<div class="meta">Imports: <span class="mono">${escapeHtml((metadata.imports || []).join(', ') || 'None found')}</span></div>`;
-    html += `<div class="meta">Triple count: <span class="mono">${escapeHtml(metadata.tripleCount || 0)}</span></div>`;
-    html += `<div class="meta">Labeled resources: <span class="mono">${escapeHtml(metadata.labeledResourceCount || 0)}</span></div>`;
+    html += `<div class="meta">File: <span class="mono">${escapeHtmlText(metadata.fileName || '')}</span></div>`;
+    html += `<div class="meta">Ontology IRI: <span class="mono">${escapeHtmlText(metadata.ontologyIri || '')}</span></div>`;
+    html += `<div class="meta">Title: ${escapeHtmlText(metadata.title || 'Not found')}</div>`;
+    html += `<div class="meta">Version IRI: <span class="mono">${escapeHtmlText(metadata.versionIri || 'Not found')}</span></div>`;
+    html += `<div class="meta">Version info: <span class="mono">${escapeHtmlText(metadata.versionInfo || 'Not found')}</span></div>`;
+    html += `<div class="meta">License: <span class="mono">${escapeHtmlText(metadata.license || 'Not found')}</span></div>`;
+    html += `<div class="meta">Access rights: <span class="mono">${escapeHtmlText(metadata.accessRights || 'Not found')}</span></div>`;
+    html += `<div class="meta">Imports: <span class="mono">${escapeHtmlText((metadata.imports || []).join(', ') || 'None found')}</span></div>`;
+    html += `<div class="meta">Triple count: <span class="mono">${escapeHtmlText(metadata.tripleCount || 0)}</span></div>`;
+    html += `<div class="meta">Labeled resources: <span class="mono">${escapeHtmlText(metadata.labeledResourceCount || 0)}</span></div>`;
   }
   html += '</div>';
 
@@ -301,7 +277,7 @@ export function buildHtmlReport(state) {
   if (!report) {
     html += '<p>No ontology report loaded.</p>';
   } else {
-    html += `<div class="meta">Overall status: <span class="pill">${escapeHtml(report.statusLabel || '')}</span></div>`;
+    html += `<div class="meta">Overall status: <span class="pill">${escapeHtmlText(report.statusLabel || '')}</span></div>`;
 
     html += '<h3>Ontology-level checks</h3>';
     html += '<table><thead><tr><th>criterion</th><th>type</th><th>status</th><th>failedResourcesCount</th></tr></thead><tbody>';
@@ -310,20 +286,20 @@ export function buildHtmlReport(state) {
       const criterion = getCriterionDefinition(manifest, standard.id);
       html += '<tr>';
       html += '<td>';
-      html += `<div>${escapeHtml(criterion?.label || standard.id)}</div>`;
-      html += `<div class="mono">${escapeHtml(standard.id)}</div>`;
+      html += `<div>${escapeHtmlText(criterion?.label || standard.id)}</div>`;
+      html += `<div class="mono">${escapeHtmlText(standard.id)}</div>`;
       if (criterion?.guidance) {
-        html += `<div>${escapeHtml(criterion.guidance)}</div>`;
+        html += `<div>${escapeHtmlText(criterion.guidance)}</div>`;
       }
       html += '</td>';
       html += '<td>';
-      html += `${escapeHtml(standard.type)}`;
+      html += `${escapeHtmlText(standard.type)}`;
       if (criterion?.remediationEffort) {
-        html += `<div>${escapeHtml(criterion.remediationEffort)}</div>`;
+        html += `<div>${escapeHtmlText(criterion.remediationEffort)}</div>`;
       }
       html += '</td>';
-      html += `<td>${escapeHtml(standard.status)}</td>`;
-      html += `<td class="mono">${escapeHtml(standard.failedResourcesCount ?? '')}</td>`;
+      html += `<td>${escapeHtmlText(standard.status)}</td>`;
+      html += `<td class="mono">${escapeHtmlText(standard.failedResourcesCount ?? '')}</td>`;
       html += '</tr>';
     }
 
@@ -336,20 +312,20 @@ export function buildHtmlReport(state) {
       const criterion = getCriterionDefinition(manifest, standard.id);
       html += '<tr>';
       html += '<td>';
-      html += `<div>${escapeHtml(criterion?.label || standard.id)}</div>`;
-      html += `<div class="mono">${escapeHtml(standard.id)}</div>`;
+      html += `<div>${escapeHtmlText(criterion?.label || standard.id)}</div>`;
+      html += `<div class="mono">${escapeHtmlText(standard.id)}</div>`;
       if (criterion?.guidance) {
-        html += `<div>${escapeHtml(criterion.guidance)}</div>`;
+        html += `<div>${escapeHtmlText(criterion.guidance)}</div>`;
       }
       html += '</td>';
       html += '<td>';
-      html += `${escapeHtml(standard.type)}`;
+      html += `${escapeHtmlText(standard.type)}`;
       if (criterion?.remediationEffort) {
-        html += `<div>${escapeHtml(criterion.remediationEffort)}</div>`;
+        html += `<div>${escapeHtmlText(criterion.remediationEffort)}</div>`;
       }
       html += '</td>';
-      html += `<td>${escapeHtml(standard.status)}</td>`;
-      html += `<td class="mono">${escapeHtml(standard.failedResourcesCount ?? '')}</td>`;
+      html += `<td>${escapeHtmlText(standard.status)}</td>`;
+      html += `<td class="mono">${escapeHtmlText(standard.failedResourcesCount ?? '')}</td>`;
       html += '</tr>';
     }
 
@@ -361,11 +337,11 @@ export function buildHtmlReport(state) {
     const criterion = getCriterionDefinition(manifest, selectedCriterionId);
     html += '<div class="card"><h2>Standard detail</h2>';
     if (criterion) {
-      html += `<div class="meta">Label: ${escapeHtml(criterion.label)}</div>`;
-      html += `<div class="meta">Criterion ID: <span class="mono">${escapeHtml(criterion.id)}</span></div>`;
-      html += `<div class="meta">Remediation effort: ${escapeHtml(criterion.remediationEffort)}</div>`;
+      html += `<div class="meta">Label: ${escapeHtmlText(criterion.label)}</div>`;
+      html += `<div class="meta">Criterion ID: <span class="mono">${escapeHtmlText(criterion.id)}</span></div>`;
+      html += `<div class="meta">Remediation effort: ${escapeHtmlText(criterion.remediationEffort)}</div>`;
       if (criterion.guidance) {
-        html += `<div class="meta">Brief guidance: ${escapeHtml(criterion.guidance)}</div>`;
+        html += `<div class="meta">Brief guidance: ${escapeHtmlText(criterion.guidance)}</div>`;
       }
     }
 
@@ -376,8 +352,8 @@ export function buildHtmlReport(state) {
 
       for (const entry of standardDetailEntries) {
         html += '<tr>';
-        html += `<td class="mono">${escapeHtml(entry.resource)}</td>`;
-        html += `<td class="mono">${escapeHtml(entry.queryIds.join(', '))}</td>`;
+        html += `<td class="mono">${escapeHtmlText(entry.resource)}</td>`;
+        html += `<td class="mono">${escapeHtmlText(entry.queryIds.join(', '))}</td>`;
         html += '</tr>';
       }
 
@@ -388,7 +364,7 @@ export function buildHtmlReport(state) {
   }
 
   html += '<div class="card"><h2>Per-resource curation (filtered)</h2>';
-  html += `<div class="meta">Rows: <span class="mono">${escapeHtml(perResourceRows.length)}</span></div>`;
+  html += `<div class="meta">Rows: <span class="mono">${escapeHtmlText(perResourceRows.length)}</span></div>`;
 
   if (!perResourceRows.length) {
     html += '<p>No resources in current view.</p>';
@@ -402,11 +378,11 @@ export function buildHtmlReport(state) {
         : [];
 
       html += '<tr>';
-      html += `<td class="mono">${escapeHtml(row.resource || '')}</td>`;
-      html += `<td>${escapeHtml(row.currentStatusLabel || 'Not asserted')}</td>`;
-      html += `<td>${escapeHtml(row.statusLabel || '')}</td>`;
-      html += `<td class="mono">${escapeHtml(failedRequirements.join(', '))}</td>`;
-      html += `<td class="mono">${escapeHtml(failedRecommendations.join(', '))}</td>`;
+      html += `<td class="mono">${escapeHtmlText(row.resource || '')}</td>`;
+      html += `<td>${escapeHtmlText(row.currentStatusLabel || 'Not asserted')}</td>`;
+      html += `<td>${escapeHtmlText(row.statusLabel || '')}</td>`;
+      html += `<td class="mono">${escapeHtmlText(failedRequirements.join(', '))}</td>`;
+      html += `<td class="mono">${escapeHtmlText(failedRecommendations.join(', '))}</td>`;
       html += '</tr>';
     }
 

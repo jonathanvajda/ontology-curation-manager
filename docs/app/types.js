@@ -58,7 +58,7 @@
  * Parsed ontology state retained for round-tripping and edit sessions.
  *
  * @typedef {Object} ParsedOntologyState
- * @property {import('./rdf-io.js').RdfJsStore} store
+ * @property {any} store
  * @property {Record<string, string>} prefixes
  * @property {'text/turtle' | 'application/n-triples' | 'application/n-quads' | 'application/trig' | 'text/n3' | 'application/ld+json' | 'application/rdf+xml'} sourceFormat
  * @property {string | null} baseIri

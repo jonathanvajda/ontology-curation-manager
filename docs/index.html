@@ -113,6 +113,11 @@
 
   <!-- App Local CSS -->
   <link rel="stylesheet" href="./styles/ontology-compliance-diagnostic.css" />
+  <link rel="modulepreload" href="./app/shared/namespace-registry/prefix-map.js" />
+  <link rel="modulepreload" href="./app/shared/namespace-registry/rdf-serialization-prefixes.js" />
+  <link rel="modulepreload" href="./app/shared/format-registry/mime-registry.js" />
+  <link rel="modulepreload" href="./app/shared/format-registry/rdf-parser-formats.js" />
+  <link rel="modulepreload" href="./app/shared/browser-file-io/index.js" />
 </head>
 
 <body data-page-id="ontology-compliance-diagnostic">
@@ -129,7 +134,7 @@
             class="ocd-input ocd-input-file"
             type="file"
             id="ontologyFiles"
-            accept=".ttl,.turtle,.rdf,.owl,.xml,.nt,.ntriples,.nq,.trig,.n3,.jsonld,.json-ld"
+            accept=".ttl,.turtle,.n3,.nt,.ntriples,.nq,.nquads,.trig,.jsonld,.json-ld,.rdf,.owl,.xml"
             multiple
           />
 
@@ -151,6 +156,7 @@
         <div class="ocd-toolbar-right">
           <div class="ocd-actions" role="group" aria-label="Related tools">
             <a class="ocd-btn ocd-btn-tertiary" href="./ontology-measures.html">Ontology Measures</a>
+            <a class="ocd-btn ocd-btn-tertiary" href="./nlp-quality-assurance.html">NLP Quality Assurance</a>
           </div>
 
           <div class="ocd-export" role="group" aria-label="Download exports">
@@ -266,6 +272,7 @@
         <div class="ocd-toolbar-right">
           <div class="ocd-actions" role="group" aria-label="Related tools">
             <a class="ocd-btn ocd-btn-tertiary" href="./ontology-measures.html">Open Ontology Measures</a>
+            <a class="ocd-btn ocd-btn-tertiary" href="./nlp-quality-assurance.html">Open NLP Quality Assurance</a>
           </div>
         </div>
       </div>
@@ -289,10 +296,10 @@
   </footer>
 
   <!-- Vendor JS -->
-  <script src="./app/n3.min.js"></script>
-  <script src="./app/jsonld.min.js"></script>
-  <script src="./app/rdflib.min.js"></script>
-  <script src="./app/comunica-browser.js"></script>
+  <script src="./app/shared/vendor/n3.min.js"></script>
+  <script src="./app/shared/vendor/jsonld.min.js"></script>
+  <script src="./app/shared/vendor/rdflib.min.js"></script>
+  <script src="./app/shared/vendor/comunica-browser.js"></script>
 
   <!-- Header JS -->
   <script>
@@ -335,7 +342,10 @@
       })();
     })();
   </script>
+  <link rel="modulepreload" href="./app/shared/tabular-io/index.js" />
+  <link rel="modulepreload" href="./app/shared/rdf-io/index.js" />
   <script type="module" src="./app/main.js"></script>
   
 </body>
 </html>
+
